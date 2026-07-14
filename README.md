@@ -1,6 +1,5 @@
 # automation_learning_log
-
-A working record of n8n automations built for NIC Kurukshetra, District Administration Haryana —
+A working record of n8n automations built for Sh. Vinod Singla, Former Sr. Director, Scientist 'F', National Informatics Center —
 kept as a teaching path for MCA/BTech interns learning automation from first install onward.
 
 **Live site:** `index.html` (deploy via GitHub Pages — see below)
