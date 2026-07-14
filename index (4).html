@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Automation Log — n8n Journey, Kurukshetra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1120;
+  --panel:#141D33;
+  --panel-2:#101828;
+  --line:#243050;
+  --amber:#F5A623;
+  --teal:#4ECDC4;
+  --violet:#9B8CFF;
+  --rose:#F5677A;
+  --text:#E7EAF0;
+  --muted:#7C879C;
+  --radius:14px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:48px 48px;
+  opacity:0.12;
+  pointer-events:none;
+  z-index:0;
+}
+h1,h2,h3,h4{font-family:'Sora',sans-serif; letter-spacing:-0.01em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit; text-decoration:none;}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px; position:relative; z-index:1;}
+::selection{background:var(--amber); color:#0B1120;}
+
+/* ---------- Loader ---------- */
+#loader{
+  position:fixed; inset:0; background:var(--bg); z-index:999;
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  gap:16px; transition:opacity .5s ease, visibility .5s ease;
+}
+#loader .dot-line{display:flex; gap:10px;}
+#loader .dot{width:10px;height:10px;border-radius:50%; background:var(--amber); animation:pulse 1.2s infinite ease-in-out;}
+#loader .dot:nth-child(2){background:var(--teal); animation-delay:.15s;}
+#loader .dot:nth-child(3){background:var(--violet); animation-delay:.3s;}
+@keyframes pulse{0%,100%{transform:scale(0.6); opacity:.4;} 50%{transform:scale(1); opacity:1;}}
+#loader p{font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:13px; letter-spacing:.05em;}
+#loader.hide{opacity:0; visibility:hidden;}
+
+/* ---------- Progress bar ---------- */
+#progress{
+  position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--teal));
+  width:0%; z-index:998; transition:width .1s ease;
+}
+
+/* ---------- Nav ---------- */
+nav{
+  position:sticky; top:0; z-index:100;
+  background:rgba(11,17,32,0.85); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+nav .inner{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px; margin:0 auto;}
+.brand{display:flex; align-items:center; gap:10px; font-family:'Sora',sans-serif; font-weight:700; font-size:17px;}
+.brand .node-dot{width:10px;height:10px;border-radius:3px; background:var(--amber); box-shadow:0 0 12px var(--amber);}
+nav ul{display:flex; gap:32px; list-style:none;}
+nav ul a{font-size:14px; color:var(--muted); font-weight:500; transition:color .2s;}
+nav ul a:hover{color:var(--text);}
+.nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:22px; cursor:pointer;}
+@media(max-width:820px){
+  nav ul{position:fixed; top:64px; right:0; height:calc(100vh - 64px); width:240px; background:var(--panel);
+    flex-direction:column; padding:32px 24px; gap:24px; transform:translateX(100%); transition:transform .3s ease; border-left:1px solid var(--line);}
+  nav ul.open{transform:translateX(0);}
+  .nav-toggle{display:block;}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:90px 0 70px; position:relative;}
+.hero-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:center;}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--teal); letter-spacing:.1em;
+  text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:18px;
+}
+.eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--teal); box-shadow:0 0 10px var(--teal);}
+.hero h1{font-size:clamp(34px,5vw,54px); font-weight:800; line-height:1.08; margin-bottom:20px;}
+.hero h1 span{background:linear-gradient(90deg,var(--amber),var(--rose)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.hero p.lead{color:var(--muted); font-size:17px; max-width:480px; margin-bottom:32px;}
+.btn-row{display:flex; gap:14px; flex-wrap:wrap;}
+.btn{
+  padding:13px 24px; border-radius:10px; font-weight:600; font-size:14.5px; cursor:pointer; border:1px solid transparent;
+  transition:transform .15s ease, border-color .2s ease;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:var(--amber); color:#1A1200;}
+.btn-ghost{border-color:var(--line); color:var(--text);}
+.btn-ghost:hover{border-color:var(--teal);}
+
+/* Live diagram in hero */
+.diagram-stage{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:28px; min-height:320px; position:relative; overflow:hidden;
+}
+.diagram-stage .stage-label{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:18px; display:block;}
+.node-flow{display:flex; flex-direction:column; gap:0; align-items:flex-start;}
+.node-item{
+  display:flex; align-items:center; gap:12px; opacity:0; transform:translateY(10px);
+  animation:nodeIn .5s ease forwards;
+}
+.node-item .pill{
+  padding:10px 16px; border-radius:9px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:500;
+  border:1px solid; white-space:nowrap;
+}
+.node-item .connector{width:2px; height:26px; background:var(--line); margin-left:20px;}
+@keyframes nodeIn{to{opacity:1; transform:translateY(0);}}
+.type-trigger{border-color:var(--amber); background:rgba(245,166,35,0.1); color:var(--amber);}
+.type-logic{border-color:var(--teal); background:rgba(78,205,196,0.1); color:var(--teal);}
+.type-service{border-color:var(--violet); background:rgba(155,140,255,0.1); color:var(--violet);}
+.type-ai{border-color:var(--rose); background:rgba(245,103,122,0.1); color:var(--rose);}
+
+/* ---------- Stats ---------- */
+.stats{padding:50px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+.stats-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:24px; text-align:center;}
+@media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-num{font-family:'Sora',sans-serif; font-size:34px; font-weight:800; color:var(--text);}
+.stat-label{font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:4px;}
+
+/* ---------- Section heads ---------- */
+.section{padding:80px 0;}
+.section-head{margin-bottom:42px; max-width:640px;}
+.section-head .eyebrow{margin-bottom:12px;}
+.section-head h2{font-size:clamp(26px,3.4vw,36px); font-weight:700;}
+.section-head p{color:var(--muted); margin-top:10px; font-size:15.5px;}
+
+/* ---------- Search & filter ---------- */
+.controls{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:36px; align-items:center;}
+.search-box{
+  flex:1; min-width:240px; display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px;
+}
+.search-box input{background:none; border:none; outline:none; color:var(--text); font-size:14.5px; width:100%; font-family:'Inter',sans-serif;}
+.search-box input::placeholder{color:var(--muted);}
+.search-box svg{flex-shrink:0;}
+.filter-row{display:flex; gap:8px; flex-wrap:wrap;}
+.filter-btn{
+  padding:9px 16px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2);
+  color:var(--muted); font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif;
+}
+.filter-btn:hover{color:var(--text); border-color:var(--teal);}
+.filter-btn.active{background:var(--teal); border-color:var(--teal); color:#04211E;}
+
+/* ---------- Project cards ---------- */
+.project-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:22px;}
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:24px;
+  display:flex; flex-direction:column; gap:16px; cursor:pointer; transition:transform .2s ease, border-color .2s ease;
+  opacity:0; animation:cardIn .5s ease forwards;
+}
+@keyframes cardIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+.card:hover{transform:translateY(-4px); border-color:var(--amber);}
+.card-top{display:flex; justify-content:space-between; align-items:flex-start;}
+.card-idx{font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:12px;}
+.badge{padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; font-family:'JetBrains Mono',monospace;}
+.badge-beginner{background:rgba(78,205,196,.12); color:var(--teal);}
+.badge-intermediate{background:rgba(245,166,35,.12); color:var(--amber);}
+.badge-advanced{background:rgba(245,103,122,.12); color:var(--rose);}
+.badge-enterprise{background:rgba(155,140,255,.12); color:var(--violet);}
+.card h3{font-size:18px; font-weight:700;}
+.mini-flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.mini-pill{
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:5px 9px; border-radius:6px; border:1px solid;
+}
+.mini-arrow{color:var(--muted); font-size:12px;}
+.card p.desc{color:var(--muted); font-size:13.5px;}
+.card-footer{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:12px; border-top:1px solid var(--line);}
+.card-footer .time{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+.view-link{font-size:13px; font-weight:600; color:var(--amber); display:flex; align-items:center; gap:5px;}
+
+/* ---------- Roadmap ---------- */
+.timeline{position:relative; padding-left:32px;}
+.timeline::before{content:""; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:var(--line);}
+.tl-item{position:relative; padding-bottom:36px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-item::before{
+  content:""; position:absolute; left:-32px; top:4px; width:18px; height:18px; border-radius:50%;
+  background:var(--panel); border:2px solid var(--teal);
+}
+.tl-item h4{font-size:16px; margin-bottom:4px;}
+.tl-item p{color:var(--muted); font-size:13.5px;}
+
+/* ---------- Skills ---------- */
+.skill-cloud{display:flex; flex-wrap:wrap; gap:10px;}
+.skill-chip{
+  padding:9px 15px; border-radius:8px; background:var(--panel); border:1px solid var(--line);
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); transition:.2s;
+}
+.skill-chip:hover{border-color:var(--amber); color:var(--text);}
+
+/* ---------- About ---------- */
+.about-box{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:36px;}
+.about-box p{color:var(--muted); font-size:15px; margin-bottom:14px;}
+.about-box p:last-child{margin-bottom:0;}
+.about-box strong{color:var(--text);}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(6,9,18,0.75); backdrop-filter:blur(4px); z-index:200;
+  display:none; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;
+}
+.modal-backdrop.open{display:flex;}
+.modal{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); max-width:680px; width:100%;
+  padding:36px; position:relative; animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);}}
+.modal-close{position:absolute; top:20px; right:20px; background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal h3{font-size:24px; margin-bottom:6px;}
+.modal .modal-meta{display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
+.modal-section{margin-bottom:20px;}
+.modal-section h5{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:8px; font-family:'JetBrains Mono',monospace;}
+.modal-section ul{padding-left:18px; color:var(--muted); font-size:14px;}
+.modal-section ul li{margin-bottom:4px;}
+.modal-section p{color:var(--muted); font-size:14.5px;}
+.modal-flow{background:var(--panel-2); border-radius:10px; padding:18px; margin-bottom:20px;}
+
+/* ---------- Footer ---------- */
+footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
+.footer-grid{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;}
+.footer-grid p{color:var(--muted); font-size:13.5px;}
+.footer-links{display:flex; gap:22px;}
+.footer-links a{color:var(--muted); font-size:13.5px; transition:.2s;}
+.footer-links a:hover{color:var(--teal);}
+
+/* ---------- Back to top ---------- */
+#toTop{
+  position:fixed; bottom:26px; right:26px; width:44px; height:44px; border-radius:50%;
+  background:var(--amber); color:#1A1200; border:none; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; opacity:0; visibility:hidden; transition:.3s; z-index:90; font-size:18px;
+}
+#toTop.show{opacity:1; visibility:visible;}
+
+.reveal{opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="dot-line"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <p>connecting nodes...</p>
+</div>
+<div id="progress"></div>
+
+<nav>
+  <div class="inner">
+    <div class="brand"><span class="node-dot"></span> The Automation Log</div>
+    <ul id="navList">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle">☰</button>
+  </div>
+</nav>
+
+<header class="hero" id="home">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">NIC Kurukshetra · District Administration, Haryana</div>
+      <h1>Ten builds. One notebook. <span>Real automations, in order.</span></h1>
+      <p class="lead">A working record of every n8n project built from first install to a full event-management system — kept as a teaching path for interns picking up automation for the first time.</p>
+      <div class="btn-row">
+        <a href="#projects" class="btn btn-primary">Explore the builds</a>
+        <a href="#roadmap" class="btn btn-ghost">See the learning path</a>
+      </div>
+    </div>
+    <div class="diagram-stage">
+      <span class="stage-label">// project_05 — motivation-story.json</span>
+      <div class="node-flow" id="heroFlow"></div>
+    </div>
+  </div>
+</header>
+
+<section class="stats">
+  <div class="wrap stats-grid">
+    <div><div class="stat-num" data-count="13">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
+    <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
+    <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
+    <div><div class="stat-num" data-count="15">0</div><div class="stat-label">Days, teaching curriculum</div></div>
+  </div>
+</section>
+
+<section class="section" id="projects">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The builds</div>
+      <h2>Every project, in the order it was learned</h2>
+      <p>Each card shows the exact node chain used — not a simplified version. Search by name, node, or category.</p>
+    </div>
+
+    <div class="controls reveal">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C879C" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, node, or tag...">
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+    </div>
+
+    <div class="project-grid" id="projectGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="roadmap" style="background:var(--panel-2);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The path</div>
+      <h2>How the curriculum actually unfolded</h2>
+      <p>Not a syllabus written in advance — the order these were genuinely built and taught in.</p>
+    </div>
+    <div class="timeline" id="roadmapList"></div>
+  </div>
+</section>
+
+<section class="section" id="skills">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The toolkit</div>
+      <h2>Nodes, services, and concepts covered</h2>
+    </div>
+    <div class="skill-cloud" id="skillCloud"></div>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">About this log</div>
+      <h2>Why this exists</h2>
+    </div>
+    <div class="about-box reveal">
+      <p><strong>The Automation Log</strong> documents a self-taught n8n journey built for real district administration needs at NIC Kurukshetra — starting from a single scheduled message and ending in a full event-support system.</p>
+      <p>The last build, the <strong>Hackathon Management System</strong>, was a practice exercise — a virtual scenario used to learn end-to-end event operations (registration correction, categorized support triage, FAQ handling, and event-day coupon management) without a live event behind it.</p>
+      <p>This page now serves as a reference for students being introduced to n8n from scratch — each project doubles as a lesson, complete with the real node chain and the concepts it was chosen to teach.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <p>© 2026 The Automation Log · automation_learning_log — built with n8n, Groq &amp; Google Sheets.</p>
+    <div class="footer-links">
+      <a href="#projects">Projects</a>
+      <a href="#about">About</a>
+      <a href="#" onclick="return false;">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<button id="toTop">↑</button>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ===================== DATA ===================== */
+const PROJECTS = [
+  {
+    id:1, num:"01", title:"Good Morning — Google Sheets", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Google Sheets","service"]],
+    desc:"First build: a daily scheduled message pulled from a Google Sheet. Covers n8n install, interface orientation, and Google auth setup.",
+    concepts:["n8n installation & interface","Cron scheduling","Expressions in Code node","Google OAuth setup","Reading a Google Sheet"],
+    prereqs:["n8n running (self-hosted or cloud)","A Google account"],
+    errors:["Google auth scope mismatch — re-generate OAuth credentials with Sheets API enabled","Sheet range referenced incorrectly in the node"],
+    tags:["google","scheduler","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/projects/1a-good-morning-google-sheets/workflow.json"
+  },
+  {
+    id:2, num:"02", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Gmail","service"]],
+    desc:"Same scheduled pattern, swapped to send via Gmail instead of reading a sheet — isolates the difference between a data source and a delivery channel.",
+    concepts:["Gmail node OAuth","Sending vs. reading nodes","Reusing the Code node logic"],
+    prereqs:["Completed project 01","Gmail API enabled in Google Cloud Console"],
+    errors:["Gmail API not enabled on the Google Cloud project","Token expiry requiring re-authentication"],
+    tags:["gmail","scheduler","beginner"]
+  },
+  {
+    id:3, num:"03", title:"Good Morning — Email (SMTP)", level:"Beginner", time:"25 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Email Node","service"]],
+    desc:"Delivery without relying on a Google/Gmail account — using raw SMTP and a 16-digit app password, useful when the account isn't Gmail-based.",
+    concepts:["SMTP fundamentals","16-digit app password generation","Email node vs. Gmail node tradeoffs"],
+    prereqs:["2-Step Verification enabled on the sending account","App password generated"],
+    errors:["Using the account's normal password instead of the 16-digit app password","Wrong SMTP port for TLS vs. SSL"],
+    tags:["smtp","email","beginner"]
+  },
+  {
+    id:4, num:"04", title:"Good Morning — Twilio", level:"Beginner", time:"25 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Twilio","service"]],
+    desc:"Moves the same message pattern onto SMS, introducing a paid third-party API and its credential model.",
+    concepts:["Twilio account setup","API key vs. auth token","SMS delivery constraints (sandbox numbers)"],
+    prereqs:["Twilio trial account","Verified sandbox number"],
+    errors:["Recipient number not verified in Twilio sandbox","Country code formatting mismatch"],
+    tags:["twilio","sms","beginner"]
+  },
+  {
+    id:5, num:"05", title:"Motivation Story — Groq AI", level:"Intermediate", time:"35 min",
+    category:"AI",
+    flow:[["Scheduler","trigger"],["Code","logic"],["AI (Groq)","ai"],["Gmail","service"]],
+    desc:"First AI-generated content build — a scheduled motivational story written by Groq's LLM and emailed automatically. Introduces prompt design inside a workflow.",
+    concepts:["Groq API integration","Prompt construction in n8n","Chaining AI output into a delivery node","ntfy setup & subscription for testing alerts"],
+    prereqs:["Groq API key","Completed project 02 (Gmail delivery)"],
+    errors:["Malformed JSON from multiline prompt strings","Token limit exceeded on longer stories"],
+    tags:["ai","groq","gmail","intermediate"]
+  },
+  {
+    id:6, num:"06", title:"Single Website Status Checker", level:"Intermediate", time:"30 min",
+    category:"Monitoring",
+    flow:[["Scheduler","trigger"],["HTTP Request","logic"],["Code","logic"],["Notify","service"]],
+    desc:"Pings one site on a schedule and alerts on a non-200 response — the base pattern every later monitoring build extends.",
+    concepts:["HTTP Request node","Status code handling","Conditional alerting logic"],
+    prereqs:["A site URL to monitor","ntfy topic subscribed on phone"],
+    errors:["Timeout not configured, causing false down-alerts","Alert firing on every run instead of only on state change"],
+    tags:["monitoring","http","intermediate"]
+  },
+  {
+    id:7, num:"07", title:"Multi-Website Monitoring", level:"Intermediate", time:"40 min",
+    category:"Monitoring",
+    flow:[["Scheduler","trigger"],["Split In Batches","logic"],["HTTP Request","logic"],["Code","logic"],["Google Sheets","service"],["Notify","service"]],
+    desc:"Extends the single-site checker to a list of district/government sites, logging every check to a sheet and alerting only on down events.",
+    concepts:["Looping over a list with Split In Batches","Logging historical status to Sheets","Reducing alert noise"],
+    prereqs:["Completed project 06","List of URLs in a Google Sheet"],
+    errors:["Batch size too large, hitting rate limits","Sheet row appended before status was finalized"],
+    tags:["monitoring","google","batches","intermediate"]
+  },
+  {
+    id:8, num:"08", title:"Database Health Checker", level:"Advanced", time:"40 min",
+    category:"Database",
+    flow:[["Scheduler","trigger"],["Database Query","logic"],["Code","logic"],["Notify","service"]],
+    desc:"Same monitoring pattern applied to a database connection — checking query latency and connectivity rather than an HTTP endpoint.",
+    concepts:["Database node credentials","Query-based health checks","Latency thresholds"],
+    prereqs:["Database connection string","Completed projects 06–07"],
+    errors:["Credential misconfiguration blocking connection","Query timing out under load, flagged as false failure"],
+    tags:["database","monitoring","advanced"]
+  },
+  {
+    id:9, num:"09", title:"Leave Application Automation", level:"Advanced", time:"45 min",
+    category:"Business",
+    flow:[["Form","trigger"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
+    desc:"First workflow with a human approval step — an employee submits a form, it's logged, and an approval email routes back to update status.",
+    concepts:["n8n Form trigger","Multi-step approval logic","Status updates written back to Sheets"],
+    prereqs:["Completed projects 01 & 02"],
+    errors:["Row lookup failing on duplicate names","Approval link not validating the correct row"],
+    tags:["form","business","google","advanced"]
+  },
+  {
+    id:10, num:"10", title:"Gita Wisdom — AI Q&A", level:"Intermediate", time:"30 min",
+    category:"AI",
+    flow:[["Webhook","trigger"],["Code","logic"],["AI (Groq)","ai"],["Respond to Webhook","service"]],
+    desc:"A simple HTML page where a visitor types a question — 'What does the Gita say about Ahimsa?', 'What is Karma?' — and gets an answer back in a dialog modal, powered by a Groq-backed prompt grounded in Gita themes.",
+    concepts:["Webhook trigger from a plain HTML form","Prompt design for scoped/topic-specific answers","Returning AI output synchronously via Respond to Webhook","Rendering the response in a JS modal on the front end"],
+    prereqs:["Groq API key","Basic HTML form with fetch() call to the webhook URL"],
+    errors:["Webhook left in Test mode instead of Production, breaking the live page","No fallback message when the AI response is empty or off-topic"],
+    tags:["ai","groq","gita","webhook","intermediate"]
+  },
+  {
+    id:11, num:"11", title:"Complaint System — Aadhar, Ration, PPP, Pension, Certificates", level:"Advanced", time:"50 min",
+    category:"Business",
+    flow:[["Form","trigger"],["AI (Groq)","ai"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
+    desc:"Applicants submit a complaint (Aadhar Card, Ration Card, PPP, Pension, Certificates, etc.) through an HTML form. A free-text description can be improved by AI before submission. The workflow auto-categorizes by department, routes the complaint with applicant details for action, logs it to a sheet, and exposes a tracker so the applicant can check status.",
+    concepts:["AI-assisted text refinement before submission","Rule-based department categorization","Routing with applicant context attached","Building a status tracker on top of a Sheets log"],
+    prereqs:["Completed project 09 (form + approval pattern)","Department email list mapped to categories"],
+    errors:["Category keywords overlapping across departments, causing misroutes","Tracker showing stale status when the sheet update and notification steps run out of order"],
+    tags:["complaint","ai","government","google","gmail","advanced"]
+  },
+  {
+    id:12, num:"12", title:"WhatsApp VIP Alert", level:"Advanced", time:"35 min",
+    category:"Monitoring",
+    flow:[["Webhook","trigger"],["Code","logic"],["Switch","logic"],["Notify","service"]],
+    desc:"Incoming WhatsApp messages are relayed through ntfy. The workflow checks the sender against a VIP list (DC, SIO, etc.) or scans content for priority keywords (e.g. 'flood alert') and escalates matching messages instantly to the concerned authority — built for situations like flood control where a message can't wait to be noticed manually.",
+    concepts:["Relaying WhatsApp messages through ntfy as a trigger source","Sender-based VIP matching vs. keyword-based content matching","Switch node for multi-path escalation","Instant push notification to a concerned authority"],
+    prereqs:["ntfy topic receiving forwarded WhatsApp messages","List of VIP senders and priority keywords"],
+    errors:["Keyword match too broad, triggering on unrelated messages containing the word","VIP number format mismatch (missing country code) causing missed matches"],
+    tags:["whatsapp","ntfy","alert","monitoring","advanced"]
+  },
+  {
+    id:13, num:"13", title:"Hackathon Management System (Practice)", level:"Enterprise", time:"Multi-day",
+    category:"Enterprise",
+    flow:[["Form","trigger"],["Validate & Sort","logic"],["Support Desk","service"],["FAQ Engine","service"],["Coupon Manager","service"]],
+    desc:"A virtual, practice-only build simulating full event management: correcting entry errors on existing and new registrations, sorting into three categories (e.g. admit card issues), running a support desk (WiFi, parking, laptop), an FAQ layer, and event-day coupon and activity management.",
+    concepts:["Data validation & error correction at scale","Multi-category sorting logic","Support-ticket style routing","Event-day operational automation"],
+    prereqs:["Completed projects 01–09","Comfortable with Sheets as a database"],
+    errors:["Duplicate entries counted twice during correction pass","Category sort misclassifying edge-case entries"],
+    tags:["enterprise","events","practice","advanced"]
+  }
+];
+
+const ROADMAP = [
+  "Installation & Interface — getting n8n running, first look at the canvas",
+  "Notifications — Sheets, Gmail, SMTP, Twilio: same pattern, four channels",
+  "Monitoring — single site, then a full list, logged and alerted",
+  "AI Automation — first Groq-powered content generation",
+  "Database — health checks against a live connection",
+  "Business Automation — human approval steps, status tracking",
+  "Enterprise Systems — a full practice event-management build"
+];
+
+const SKILLS = ["Scheduler","Code Node","HTTP Request","Google Sheets","Gmail","SMTP","Twilio","Groq AI","Webhook",
+  "Split In Batches","Form Trigger","Database Query","ntfy","OAuth2","JSON","Expressions","Conditional Logic",
+  "Regex","REST API","Google Cloud Console","App Passwords","Error Handling","Google Drive","Cron"];
+
+const NODE_TYPE_LABEL = {trigger:"type-trigger", logic:"type-logic", service:"type-service", ai:"type-ai"};
+
+/* ===================== LOADER ===================== */
+window.addEventListener("load", () => {
+  setTimeout(() => document.getElementById("loader").classList.add("hide"), 500);
+});
+
+/* ===================== SCROLL PROGRESS ===================== */
+window.addEventListener("scroll", () => {
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById("progress").style.width = scrolled + "%";
+  document.getElementById("toTop").classList.toggle("show", h.scrollTop > 500);
+});
+
+/* ===================== NAV TOGGLE ===================== */
+document.getElementById("navToggle").addEventListener("click", () => {
+  document.getElementById("navList").classList.toggle("open");
+});
+document.querySelectorAll("#navList a").forEach(a => a.addEventListener("click", () => {
+  document.getElementById("navList").classList.remove("open");
+}));
+
+/* ===================== BACK TO TOP ===================== */
+document.getElementById("toTop").addEventListener("click", () => window.scrollTo({top:0, behavior:"smooth"}));
+
+/* ===================== HERO DIAGRAM ===================== */
+function renderHeroFlow(){
+  const container = document.getElementById("heroFlow");
+  container.innerHTML = "";
+  const flow = PROJECTS[4].flow; // motivation story
+  flow.forEach(([label, type], i) => {
+    if(i > 0){
+      const c = document.createElement("div");
+      c.className = "connector";
+      container.appendChild(c);
+    }
+    const item = document.createElement("div");
+    item.className = "node-item";
+    item.style.animationDelay = (i * 0.35) + "s";
+    item.innerHTML = `<div class="pill ${NODE_TYPE_LABEL[type]}">${label}</div>`;
+    container.appendChild(item);
+  });
+}
+renderHeroFlow();
+
+/* ===================== STATS COUNTER ===================== */
+function animateCounters(){
+  document.querySelectorAll(".stat-num").forEach(el => {
+    const target = parseInt(el.dataset.count, 10);
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 40));
+    const iv = setInterval(() => {
+      cur += step;
+      if(cur >= target){ cur = target; clearInterval(iv); }
+      el.textContent = cur;
+    }, 30);
+  });
+}
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ animateCounters(); statsObserver.disconnect(); } });
+}, {threshold:0.4});
+statsObserver.observe(document.querySelector(".stats"));
+
+/* ===================== PROJECT GRID ===================== */
+let activeFilter = "All";
+let searchTerm = "";
+
+function buildFilters(){
+  const cats = ["All", ...new Set(PROJECTS.map(p => p.category))];
+  const row = document.getElementById("filterRow");
+  row.innerHTML = "";
+  cats.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "filter-btn" + (cat === "All" ? " active" : "");
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
+      activeFilter = cat;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProjects();
+    });
+    row.appendChild(btn);
+  });
+}
+
+function matchesSearch(p, term){
+  if(!term) return true;
+  const hay = (p.title + " " + p.category + " " + p.tags.join(" ") + " " + p.flow.map(f=>f[0]).join(" ")).toLowerCase();
+  return hay.includes(term.toLowerCase());
+}
+
+function renderProjects(){
+  const grid = document.getElementById("projectGrid");
+  grid.innerHTML = "";
+  const filtered = PROJECTS.filter(p => (activeFilter === "All" || p.category === activeFilter) && matchesSearch(p, searchTerm));
+
+  if(filtered.length === 0){
+    grid.innerHTML = `<p style="color:var(--muted); grid-column:1/-1;">No project matches that search — try a different node or category.</p>`;
+    return;
+  }
+
+  const badgeClass = {Beginner:"badge-beginner", Intermediate:"badge-intermediate", Advanced:"badge-advanced", Enterprise:"badge-enterprise"};
+
+  filtered.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.animationDelay = (i * 0.06) + "s";
+    const flowHtml = p.flow.map(([label,type], idx) =>
+      (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
+      `<span class="mini-pill ${NODE_TYPE_LABEL[type]}">${label}</span>`
+    ).join("");
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-idx">PROJECT_${p.num}</span>
+        <span class="badge ${badgeClass[p.level]}">${p.level}</span>
+      </div>
+      <h3>${p.title}</h3>
+      <div class="mini-flow">${flowHtml}</div>
+      <p class="desc">${p.desc}</p>
+      <div class="card-footer">
+        <span class="time mono">${p.time}</span>
+        <span class="view-link">View details →</span>
+      </div>
+    `;
+    card.addEventListener("click", () => openModal(p));
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  renderProjects();
+});
+
+/* ===================== MODAL ===================== */
+function openModal(p){
+  const backdrop = document.getElementById("modalBackdrop");
+  const content = document.getElementById("modalContent");
+  const flowHtml = p.flow.map(([label,type], idx) =>
+    (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
+    `<span class="mini-pill ${NODE_TYPE_LABEL[type]}">${label}</span>`
+  ).join("");
+
+  content.innerHTML = `
+    <button class="modal-close" id="modalClose">✕</button>
+    <span class="card-idx">PROJECT_${p.num}</span>
+    <h3>${p.title}</h3>
+    <div class="modal-meta">
+      <span class="badge" style="background:rgba(245,166,35,.12); color:var(--amber);">${p.level}</span>
+      <span class="time mono" style="color:var(--muted); align-self:center;">${p.time}</span>
+    </div>
+    <div class="modal-flow">${flowHtml}</div>
+    <div class="modal-section"><p>${p.desc}</p></div>
+    <div class="modal-section">
+      <h5>Prerequisites</h5>
+      <ul>${p.prereqs.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-section">
+      <h5>Concepts learned</h5>
+      <ul>${p.concepts.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-section">
+      <h5>Common errors hit</h5>
+      <ul>${p.errors.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+      ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px; padding:10px 18px;">Open live page ↗</a>` : ""}
+      ${p.workflowUrl ? `<a href="${p.workflowUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Download workflow JSON ↗</a>` : ""}
+      ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View tracker ↗</a>` : ""}
+    </div>
+  `;
+  backdrop.classList.add("open");
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+}
+function closeModal(){ document.getElementById("modalBackdrop").classList.remove("open"); }
+document.getElementById("modalBackdrop").addEventListener("click", (e) => {
+  if(e.target.id === "modalBackdrop") closeModal();
+});
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeModal(); });
+
+/* ===================== ROADMAP ===================== */
+function renderRoadmap(){
+  const list = document.getElementById("roadmapList");
+  list.innerHTML = "";
+  ROADMAP.forEach(step => {
+    const [title, desc] = step.split(" — ");
+    const item = document.createElement("div");
+    item.className = "tl-item";
+    item.innerHTML = `<h4>${title}</h4><p>${desc}</p>`;
+    list.appendChild(item);
+  });
+}
+
+/* ===================== SKILLS ===================== */
+function renderSkills(){
+  const cloud = document.getElementById("skillCloud");
+  cloud.innerHTML = "";
+  SKILLS.forEach(s => {
+    const chip = document.createElement("span");
+    chip.className = "skill-chip";
+    chip.textContent = s;
+    cloud.appendChild(chip);
+  });
+}
+
+/* ===================== SCROLL REVEAL ===================== */
+function initReveal(){
+  const revealEls = document.querySelectorAll(".reveal");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add("in"); });
+  }, {threshold:0.15});
+  revealEls.forEach(el => io.observe(el));
+}
+
+/* ===================== INIT ===================== */
+buildFilters();
+renderProjects();
+renderRoadmap();
+renderSkills();
+initReveal();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Never commit real credentials or environment files
+.env
+*.env
+credentials.json
+*credentials*.json
+
+# Real applicant / citizen data — sample/sanitized CSVs only, real exports stay local
+projects/**/*.csv
+!projects/**/sample-*.csv
+
+# n8n local export dumps that may include instance-specific data
+*.n8n-export.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
