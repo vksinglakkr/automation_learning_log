@@ -8,7 +8,7 @@ Covers n8n install, interface orientation, and Google OAuth setup.
 | File | Purpose |
 |---|---|
 | `workflow.json` | n8n workflow — sanitized (no real credentials/Sheet IDs). Replace the placeholders with your own before importing. |
-| `sample-log.csv` *(rename from `GoodMorning - Sheet1.csv`)* | Example export showing the log format the workflow produces. Safe to publish — contains only generated message text and timestamps, no personal data. |
+| `good-morning-log.csv` | Example export showing the log format the workflow produces. Safe to publish — contains only generated message text and timestamps, no personal data. |
 
 ## Flow
 
