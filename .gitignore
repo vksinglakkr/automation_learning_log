@@ -4,8 +4,12 @@
 credentials.json
 *credentials*.json
 
-# Real applicant / citizen data — sample/sanitized CSVs only, real exports stay local
+# Real applicant / citizen data — no personal-data CSVs should ever be committed.
+# Only commit CSVs you've manually verified contain no real applicant/citizen data
+# (e.g. generated logs like good-morning-log.csv). When in doubt, prefix with sample-
+# and keep this rule as a safety net for anything else.
 projects/**/*.csv
+!projects/**/good-morning-log.csv
 !projects/**/sample-*.csv
 
 # n8n local export dumps that may include instance-specific data
