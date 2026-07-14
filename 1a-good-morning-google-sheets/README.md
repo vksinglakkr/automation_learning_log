@@ -18,8 +18,8 @@ Covers n8n install, interface orientation, and Google OAuth setup.
 
 | Column | Description |
 |---|---|
-| `Message` | The scheduled text sent, e.g. "👋 Good Morning! n8n is working perfectly." |
-| `msgDate` | Timestamp of the run, format `yyyy-MM-dd HH:mm:ss` |
+| `MsgAt` | Timestamp of the run, format `yyyy-MM-dd HH:mm:ss` |
+| `Message` | The scheduled text sent, e.g. "Good Morning! n8n is working perfectly." |
 
 ## Setup notes
 
