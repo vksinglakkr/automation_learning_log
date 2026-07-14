@@ -8,9 +8,13 @@ credentials.json
 # Only commit CSVs you've manually verified contain no real applicant/citizen data
 # (e.g. generated logs like good-morning-log.csv). When in doubt, prefix with sample-
 # and keep this rule as a safety net for anything else.
-projects/**/*.csv
-!projects/**/good-morning-log.csv
-!projects/**/sample-*.csv
+# Real applicant / citizen data — no personal-data CSVs should ever be committed.
+# Only commit CSVs you've manually verified contain no real applicant/citizen data
+# (e.g. generated logs like good-morning-log.csv). When in doubt, prefix with sample-
+# and keep this rule as a safety net for anything else.
+*/*.csv
+!*/good-morning-log.csv
+!*/sample-*.csv
 
 # n8n local export dumps that may include instance-specific data
 *.n8n-export.json
