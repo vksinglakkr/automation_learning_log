@@ -395,7 +395,8 @@ const PROJECTS = [
     prereqs:["n8n running (self-hosted or cloud)","A Google account"],
     errors:["Google auth scope mismatch — re-generate OAuth credentials with Sheets API enabled","Sheet range referenced incorrectly in the node"],
     tags:["google","scheduler","beginner"],
-    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/projects/1a-good-morning-google-sheets/workflow.json"
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/projects/1a-good-morning-google-sheets/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/projects/1a-good-morning-google-sheets/good-morning-log.csv"
   },
   {
     id:2, num:"02", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
@@ -702,6 +703,7 @@ function openModal(p){
     <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
       ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px; padding:10px 18px;">Open live page ↗</a>` : ""}
       ${p.workflowUrl ? `<a href="${p.workflowUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Download workflow JSON ↗</a>` : ""}
+      ${p.dataUrl ? `<a href="${p.dataUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View sample data ↗</a>` : ""}
       ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View tracker ↗</a>` : ""}
     </div>
   `;
