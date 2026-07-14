@@ -1,5 +1,6 @@
 # automation_learning_log
-A working record of n8n automations built for Sh. Vinod Singla, Former Sr. Director, Scientist 'F', National Informatics Center —
+
+A working record of n8n automations built for NIC Kurukshetra, District Administration Haryana —
 kept as a teaching path for MCA/BTech interns learning automation from first install onward.
 
 **Live site:** `index.html` (deploy via GitHub Pages — see below)
@@ -11,36 +12,38 @@ automation_learning_log/
 ├── index.html                                  ← the hub itself (self-contained HTML/CSS/JS)
 ├── README.md
 ├── .gitignore
-└── projects/
-    ├── 1a-good-morning-google-sheets/
-    │   └── workflow.json
-    ├── 1b-good-morning-gmail/
-    │   └── workflow.json
-    ├── 1c-good-morning-email-smtp/
-    │   └── workflow.json
-    ├── 1d-good-morning-twilio/
-    │   └── workflow.json
-    ├── 2-motivation-story-groq/
-    │   └── workflow.json
-    ├── 3a-website-status-checker/
-    │   └── workflow.json
-    ├── 3b-multi-website-monitoring/
-    │   └── workflow.json
-    ├── 3c-database-health-checker/
-    │   └── workflow.json
-    ├── 4-leave-application/
-    │   └── workflow.json
-    ├── 5-gita-wisdom-ai-qa/
-    │   ├── workflow.json
-    │   └── demo.html
-    ├── 6-complaint-system/
-    │   ├── workflow.json
-    │   ├── demo.html
-    │   └── sample-data.csv        ← fabricated rows only, never real applicant data
-    ├── 7-whatsapp-vip-alert/
-    │   └── workflow.json
-    └── 8-hackathon-management-practice/
-        └── workflow.json
+├── 1a-good-morning-google-sheets/
+│   ├── workflow.json
+│   ├── good-morning-log.csv        ← sample log export, no personal data
+│   └── README.md
+├── 1b-good-morning-gmail/
+│   └── workflow.json
+├── 1c-good-morning-email-smtp/
+│   └── workflow.json
+├── 1d-good-morning-twilio/
+│   └── workflow.json
+├── 2-motivation-story-groq/
+│   └── workflow.json
+├── 3a-website-status-checker/
+│   └── workflow.json
+├── 3b-multi-website-monitoring/
+│   └── workflow.json
+├── 3c-database-health-checker/
+│   └── workflow.json
+├── 4-leave-application/
+│   └── workflow.json
+├── 5-gita-wisdom-ai-qa/
+│   ├── workflow.json
+│   └── demo.html
+├── 6-complaint-system/
+│   ├── workflow.json
+│   ├── demo.html
+│   ├── sample-data.csv        ← fabricated rows only, never real applicant data
+│   └── README.md
+├── 7-whatsapp-vip-alert/
+│   └── workflow.json
+└── 8-hackathon-management-practice/
+    └── workflow.json
 ```
 
 Each project folder uses generic filenames (`workflow.json`, `demo.html`) since the folder name
