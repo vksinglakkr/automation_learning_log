@@ -474,12 +474,14 @@ const PROJECTS = [
   {
     id:7, num:"3b", title:"Multi-Website Monitoring", level:"Intermediate", time:"40 min",
     category:"Monitoring",
-    flow:[["Scheduler","trigger"],["Split In Batches","logic"],["HTTP Request","logic"],["Code","logic"],["Google Sheets","service"],["Notify","service"]],
-    desc:"Extends the single-site checker to a list of district/government sites, logging every check to a sheet and alerting only on down events.",
-    concepts:["Looping over a list with Split In Batches","Logging historical status to Sheets","Reducing alert noise"],
-    prereqs:["Completed project 06","List of URLs in a Google Sheet"],
-    errors:["Batch size too large, hitting rate limits","Sheet row appended before status was finalized"],
+    flow:[["Schedule Trigger","trigger"],["Split Into Sites","logic"],["HTTP Request","logic"],["Merge UP/DOWN","logic"],["AI Alert (Groq)","ai"],["Gmail: Send Alert","service"]],
+    desc:"Extends the single-site checker to a list of government sites, checking each independently, branching per-item into UP/DOWN, merging the branches back together, and sending an AI-drafted alert email only for sites that are down.",
+    concepts:["Iterating over a list with Split Into Sites","Per-item branching (each site independently UP or DOWN)","Recombining branches with a Merge node","Calling AI only for the subset of items that need an alert, not on every check"],
+    prereqs:["Completed project 3a","Groq API credential","Gmail credential"],
+    errors:["Alert email referencing the first site in the list instead of the site that actually went down — check the Gmail node's expressions","Merge node set to 'Combine All' instead of 'Append', which can cross-join rows if multiple sites are UP and DOWN in the same run","Groq/Gmail nodes need credentials explicitly attached — not included by default on import"],
     tags:["monitoring","google","batches","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/3b-multi-website-monitoring/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/3b-multi-website-monitoring/README.md",
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3b-multi-website-monitoring"
   },
   {
@@ -520,12 +522,14 @@ const PROJECTS = [
   {
     id:11, num:"6", title:"Complaint System — Aadhar, Ration, PPP, Pension, Certificates", level:"Advanced", time:"50 min",
     category:"Business",
-    flow:[["Form","trigger"],["AI (Groq)","ai"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
-    desc:"Applicants submit a complaint (Aadhar Card, Ration Card, PPP, Pension, Certificates, etc.) through an HTML form. A free-text description can be improved by AI before submission. The workflow auto-categorizes by department, routes the complaint with applicant details for action, logs it to a sheet, and exposes a tracker so the applicant can check status.",
-    concepts:["AI-assisted text refinement before submission","Rule-based department categorization","Routing with applicant context attached","Building a status tracker on top of a Sheets log"],
-    prereqs:["Completed project 09 (form + approval pattern)","Department email list mapped to categories"],
-    errors:["Category keywords overlapping across departments, causing misroutes","Tracker showing stale status when the sheet update and notification steps run out of order"],
+    flow:[["Gmail Trigger","trigger"],["Check Already Processed","service"],["AI Summary","ai"],["Department Router","logic"],["Log to Google Sheets","service"],["Forward + Acknowledge","service"]],
+    desc:"Citizens email complaints directly (Aadhar, Ration, PPP, Pension, Revenue, Credit, etc.) to a monitored inbox. A Gmail Trigger polls every minute; each email is deduplicated against the log, AI-classified as a genuine complaint or not, routed to the right department by keyword rules, logged to Sheets with a reference number, and answered with two parallel emails — an acknowledgement to the citizen and a forward-for-action to the officer.",
+    concepts:["Gmail Trigger polling with a broad multilingual keyword filter (English + Hindi)","Deduplication via a Sheets lookup before processing, using alwaysOutputData + continueOnFail to handle 'no match found' gracefully","AI-based genuine-vs-not classification before any routing happens","Rule-based department routing from AI-extracted category to officer email + label","Two parallel outbound emails (citizen acknowledgement, officer forward) from one branch point","Reference number generation from the Gmail message ID"],
+    prereqs:["Gmail account receiving citizen complaint emails","Groq API credential","Google Sheets credential with a Complaints tab","Gmail labels created for post-processing"],
+    errors:["'Is New Email?' condition uses OR instead of AND across (not duplicate) / (subject contains 'Complaint') / (snippet contains 'Complaint') — an already-processed email whose subject happens to contain 'Complaint' can still pass through and be reprocessed, since OR only needs one true condition","Forward to Officer email references '.subject' (lowercase) instead of '.Subject' (capital) in one row — likely renders blank due to case-sensitive field mismatch","The 'Complaint' keyword check in the IF node is English-only and narrower than the Gmail Trigger's broad multilingual search — many trigger-matched emails (e.g. subject 'Pension Issue') won't contain the literal word 'Complaint'"],
     tags:["complaint","ai","government","google","gmail","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6-complaint-system/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6-complaint-system/README.md",
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6-complaint-system"
   },
   {
