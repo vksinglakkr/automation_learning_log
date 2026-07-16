@@ -1,0 +1,257 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minutes" }
+          ]
+        }
+      },
+      "id": "32250caa-8fcb-4c96-ad79-abe042039686",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-2464, 144]
+    },
+    {
+      "parameters": {
+        "url": "http://kurukshetra.gov.in",
+        "options": {
+          "response": {
+            "response": { "fullResponse": true, "neverError": true }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "591bc867-9885-4063-aba0-ce9514180286",
+      "name": "Check Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-2224, 144],
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ {\n  \"site_name\": \"kurukshetra.gov.in\",\n  \"checked_at\": $now.toISO(),\n  \"status_code\": $json.statusCode || 0,\n  \"is_up\": ($json.statusCode >= 200 && $json.statusCode < 400) ? true : false,\n  \"error_message\": $json.error ? $json.error.toString() : \"\",\n  \"response_time_ms\": $json.headers && $json.headers['x-response-time'] ? $json.headers['x-response-time'] : \"\"\n} }}",
+        "options": {}
+      },
+      "id": "069a8814-f729-43e6-9010-7a4a9f4d5ef1",
+      "name": "Build Log Record",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-2000, 144]
+    },
+    {
+      "parameters": {
+        "documentId": { "__rl": true, "mode": "list", "value": "REPLACE_WITH_GOOGLE_SHEET_ID" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "SiteLog" },
+        "options": { "returnFirstMatch": false }
+      },
+      "id": "0c19c1e3-8cd4-4934-90cf-616293de1fd8",
+      "name": "Read Last Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-1776, 144],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all previous rows, find the last one, compare with current check\nconst previousRows = $input.all();\nconst current = $('Build Log Record').first().json;\n\nlet lastStatus = null;\nif (previousRows.length > 0) {\n  const lastRow = previousRows[previousRows.length - 1].json;\n  lastStatus = lastRow.is_up === true || lastRow.is_up === 'true' || lastRow.is_up === 'TRUE';\n}\n\nconst justRecovered = (lastStatus === false && current.is_up === true);\nconst justWentDown = (lastStatus !== false && current.is_up === false);\n\nreturn [{\n  json: {\n    ...current,\n    previous_status_up: lastStatus,\n    just_recovered: justRecovered,\n    just_went_down: justWentDown\n  }\n}];"
+      },
+      "id": "826fc910-046f-4cf7-adb2-8b4cf13816c0",
+      "name": "Compare With Previous",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1552, 144]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "list", "value": "REPLACE_WITH_GOOGLE_SHEET_ID" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "SiteLog" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "site_name": "={{ $json.site_name }}",
+            "checked_at": "={{ $json.checked_at }}",
+            "status_code": "={{ $json.status_code }}",
+            "is_up": "={{ $json.is_up }}",
+            "error_message": "={{ $json.error_message }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "b667ebcb-3e17-4821-b3c1-d937e4617d1b",
+      "name": "Log Check to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-1344, 144],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-down-1",
+              "leftValue": "={{ $json.just_went_down }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0def57b8-02ef-4fbb-9b1c-5ceb674b2975",
+      "name": "Site Just Went Down?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1120, 48]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-recover-1",
+              "leftValue": "={{ $json.just_recovered }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c906b1e8-45c2-4df0-8dea-4ec56426657c",
+      "name": "Site Just Recovered?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1120, 272]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an IT alert assistant. Write a short, clear bilingual (English then Hindi) outage alert. Keep it under 80 words total.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Website: \" + $json.site_name + \"\\nChecked at: \" + $json.checked_at + \"\\nHTTP status code: \" + $json.status_code + \"\\nError: \" + $json.error_message + \"\\n\\nWrite a brief alert message explaining the site is down and likely cause.\"\n    }\n  ],\n  \"temperature\": 0.3\n} }}",
+        "options": {}
+      },
+      "id": "ab34e8a0-6d9e-44ef-8bf8-ce8cd6cc1d31",
+      "name": "Groq - Generate Down Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-896, -16],
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an IT alert assistant. Write a short, clear bilingual (English then Hindi) recovery notice. Keep it under 60 words total.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Website: \" + $json.site_name + \"\\nRecovered at: \" + $json.checked_at + \"\\nCurrent status code: \" + $json.status_code + \"\\n\\nWrite a brief message confirming the site is back up.\"\n    }\n  ],\n  \"temperature\": 0.3\n} }}",
+        "options": {}
+      },
+      "id": "22bbb124-1d74-42df-b1c4-2b80a81144b5",
+      "name": "Groq - Generate Recovery Notice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-896, 272],
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst aiText = input.choices && input.choices[0] && input.choices[0].message\n  ? input.choices[0].message.content\n  : 'AI summary unavailable. Please check the site manually.';\n\nconst siteData = $('Compare With Previous').first().json;\n\nreturn [{\n  json: {\n    ...siteData,\n    ai_summary: aiText\n  }\n}];"
+      },
+      "id": "ae968512-62d3-4c16-9eba-572319f9fc1d",
+      "name": "Extract AI Summary (Down)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-672, -16]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst aiText = input.choices && input.choices[0] && input.choices[0].message\n  ? input.choices[0].message.content\n  : 'Site recovered.';\n\nconst siteData = $('Compare With Previous').first().json;\n\nreturn [{\n  json: {\n    ...siteData,\n    ai_summary: aiText\n  }\n}];"
+      },
+      "id": "0c9a6c92-f44b-4be7-bde4-b0d4089cb997",
+      "name": "Extract AI Summary (Recovery)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-672, 272]
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_ALERT_EMAIL@example.com",
+        "subject": "=🔴 ALERT: kurukshetra.gov.in is DOWN",
+        "emailType": "text",
+        "message": "={{ $json.ai_summary }}\n\n---\nSite: {{ $json.site_name }}\nStatus Code: {{ $json.status_code }}\nError: {{ $json.error_message }}\nChecked At: {{ $json.checked_at }}",
+        "options": {}
+      },
+      "id": "b962a87c-587e-4abe-b722-0371a2197ed2",
+      "name": "Send Down Alert Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-464, -16],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_ALERT_EMAIL@example.com",
+        "subject": "=✅ RECOVERED: kurukshetra.gov.in is back UP",
+        "emailType": "text",
+        "message": "={{ $json.ai_summary }}\n\n---\nSite: {{ $json.site_name }}\nStatus Code: {{ $json.status_code }}\nChecked At: {{ $json.checked_at }}",
+        "options": {}
+      },
+      "id": "caf6be4d-c3af-4309-ab2e-2b371b5252f6",
+      "name": "Send Recovery Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-464, 272],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": { "main": [[{ "node": "Check Website", "type": "main", "index": 0 }]] },
+    "Check Website": { "main": [[{ "node": "Build Log Record", "type": "main", "index": 0 }]] },
+    "Build Log Record": { "main": [[{ "node": "Read Last Status", "type": "main", "index": 0 }]] },
+    "Read Last Status": { "main": [[{ "node": "Compare With Previous", "type": "main", "index": 0 }]] },
+    "Compare With Previous": { "main": [[{ "node": "Log Check to Sheet", "type": "main", "index": 0 }]] },
+    "Log Check to Sheet": {
+      "main": [[
+        { "node": "Site Just Went Down?", "type": "main", "index": 0 },
+        { "node": "Site Just Recovered?", "type": "main", "index": 0 }
+      ]]
+    },
+    "Site Just Went Down?": { "main": [[{ "node": "Groq - Generate Down Alert", "type": "main", "index": 0 }]] },
+    "Site Just Recovered?": { "main": [[{ "node": "Groq - Generate Recovery Notice", "type": "main", "index": 0 }]] },
+    "Groq - Generate Down Alert": { "main": [[{ "node": "Extract AI Summary (Down)", "type": "main", "index": 0 }]] },
+    "Groq - Generate Recovery Notice": { "main": [[{ "node": "Extract AI Summary (Recovery)", "type": "main", "index": 0 }]] },
+    "Extract AI Summary (Down)": { "main": [[{ "node": "Send Down Alert Email", "type": "main", "index": 0 }]] },
+    "Extract AI Summary (Recovery)": { "main": [[{ "node": "Send Recovery Email", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
