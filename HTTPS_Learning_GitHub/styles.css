@@ -1,0 +1,85 @@
+:root {
+  --bg-primary: #090d16;
+  --bg-surface: #111827;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --accent: #2563eb;
+  --border: #1f2937;
+  --success: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 550px;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+h2 { font-size: 24px; margin-bottom: 6px; text-align: center; font-weight: 700; }
+.subtitle { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 30px; line-height: 1.5; }
+
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; font-weight: 600; }
+input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: white;
+  font-size: 15px;
+}
+input:focus { outline: none; border-color: var(--accent); }
+
+button {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+button:hover { background-color: #1d4ed8; }
+
+/* Success Box Configuration */
+.success-box {
+  display: none;
+  text-align: center;
+  padding: 20px 0;
+}
+.success-icon {
+  font-size: 50px;
+  color: var(--success);
+  margin-bottom: 15px;
+}
+.success-box h3 { font-size: 20px; margin-bottom: 10px; color: var(--success); }
+.success-box p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+.footer-timestamp {
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
