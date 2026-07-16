@@ -1,0 +1,150 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "6f2a86ef-1b0e-4ff3-8ad9-fc47ea12c5cc",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l1a-wa-msg",
+              "name": "message",
+              "value": "👋 Good Morning! n8n is working perfectly. Have a great day!",
+              "type": "string"
+            },
+            {
+              "id": "l1a-wa-ts",
+              "name": "sent_at",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "043a7e72-b6f1-4314-93c6-dfe00a885456",
+      "name": "Set Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+919466137300",
+        "toWhatsapp": true,
+        "message": "={{ $json.choices[0].message.content }}",
+        "options": {}
+      },
+      "id": "69d81d3b-beb9-4fb7-a3fd-5eea4d511f47",
+      "name": "Twilio: Send WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        576,
+        112
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "8NOOttA5LuarQM1v",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 600,\n  \"temperature\": 0.7,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an inspirational storyteller and assistant. Your goal is to write extremely heart-touching, short motivational stories that inspire the soul, followed by a warm and sincere good morning wish in both English and Hindi (Devanagari).\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate a beautiful, heart-touching motivational story (under 150 words) that carries a deep life lesson. \\n\\nAfter the story, provide a warm 'Good Morning' wish for today: {{ $now.toFormat('cccc, dd MMMM yyyy') }}. \\n\\nStructure the response as follows:\\n1. **🌟 Morning Inspiration** (The Story)\\n2. **✨ The Lesson** (1 sentence)\\n3. **☕ Good Morning Wish** (In English)\\n4. **🌸 सुप्रभातम** (The same wish in Hindi)\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        112
+      ],
+      "id": "ce3559ce-8e26-4cbf-b423-f2985b9f8b55",
+      "name": "Groq (Llama 3)",
+      "credentials": {
+        "groqApi": {
+          "id": "SVypylwZhqG2a8gE",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Message": {
+      "main": [
+        [
+          {
+            "node": "Groq (Llama 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq (Llama 3)": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "61b7efe9dec4b927bcefbfccd5ef26d989ec604921fbdaa87b7d95391eb60b25"
+  }
+}
