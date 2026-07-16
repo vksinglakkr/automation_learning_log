@@ -16,6 +16,8 @@
   --teal:#4ECDC4;
   --violet:#9B8CFF;
   --rose:#F5677A;
+  --blue:#5B9DFF;
+  --green:#34D399;
   --text:#E7EAF0;
   --muted:#7C879C;
   --radius:14px;
@@ -179,6 +181,11 @@ nav ul a:hover{color:var(--text);}
 .badge-advanced{background:rgba(245,103,122,.12); color:var(--rose);}
 .badge-enterprise{background:rgba(155,140,255,.12); color:var(--violet);}
 .card h3{font-size:18px; font-weight:700;}
+.cat-chip{
+  display:inline-flex; align-items:center; gap:4px; width:fit-content;
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:3px 9px; border-radius:6px;
+  border:1px solid; background:rgba(255,255,255,0.03);
+}
 .mini-flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
 .mini-pill{
   font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:5px 9px; border-radius:6px; border:1px solid;
@@ -397,7 +404,8 @@ const PROJECTS = [
     tags:["google","scheduler","beginner"],
     workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/workflow.json",
     dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/good-morning-log.csv",
-    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1a-good-morning-google-sheets"
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1a-good-morning-google-sheets",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1a-good-morning-google-sheets/README.md"
   },
   {
     id:2, num:"02", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
@@ -527,7 +535,13 @@ const PROJECTS = [
     concepts:["HTTP Request node calling a live external REST API (GitHub)","Splitting a system into a 24x7 ingestion workflow and an admin-controlled batch workflow","Using Google Sheets as a buffer/queue (Status: Pending → Audited)","Manual Trigger for admin-controlled batch runs","Conditional scoring logic in a Set node","Building a personalized HTML email from live API response data"],
     prereqs:["Completed projects 01–08","A Google Sheet with a Status column (Pending/Audited)","Gmail credential"],
     errors:["GitHub API rate limit hit when auditing many Pending applicants in one run — batch size needs capping","Update Database Rows matching the wrong row when GitHub_Username has stray whitespace","Webhook blocked by CORS if allowedOrigins isn't set correctly for the form's domain"],
-    tags:["http","github-api","two-workflow","queue","admin-controlled","advanced"]
+    tags:["http","github-api","two-workflow","queue","admin-controlled","advanced"],
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/HTTPS_Learning_GitHub/index.html",
+    workflows:[
+      {label:"Download Workflow A (Ingestion)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/HTTPS_Learning_GitHub/WorkFlow_Entry.json"},
+      {label:"Download Workflow B (Admin Auditor)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/HTTPS_Learning_GitHub/Administration_Auditor.json"}
+    ],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/HTTPS_Learning_GitHub"
   }
 ];
 
@@ -648,11 +662,22 @@ function renderProjects(){
   }
 
   const badgeClass = {Beginner:"badge-beginner", Intermediate:"badge-intermediate", Advanced:"badge-advanced", Enterprise:"badge-enterprise"};
+  const CATEGORY_STYLE = {
+    "Notifications": {color:"var(--teal)", icon:"🔔"},
+    "AI": {color:"var(--rose)", icon:"✨"},
+    "Monitoring": {color:"var(--amber)", icon:"📡"},
+    "Database": {color:"var(--violet)", icon:"🗄️"},
+    "Business": {color:"var(--blue)", icon:"🗂️"},
+    "Enterprise": {color:"var(--violet)", icon:"🏛️"},
+    "HTTP Requests": {color:"var(--green)", icon:"🌐"}
+  };
 
   filtered.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "card";
     card.style.animationDelay = (i * 0.06) + "s";
+    const catStyle = CATEGORY_STYLE[p.category] || {color:"var(--muted)", icon:"⚙️"};
+    card.style.borderLeft = `3px solid ${catStyle.color}`;
     const flowHtml = p.flow.map(([label,type], idx) =>
       (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
       `<span class="mini-pill ${NODE_TYPE_LABEL[type]}">${label}</span>`
@@ -662,6 +687,7 @@ function renderProjects(){
         <span class="card-idx">PROJECT_${p.num}</span>
         <span class="badge ${badgeClass[p.level]}">${p.level}</span>
       </div>
+      <span class="cat-chip" style="color:${catStyle.color}; border-color:${catStyle.color}44;">${catStyle.icon} ${p.category}</span>
       <h3>${p.title}</h3>
       <div class="mini-flow">${flowHtml}</div>
       <p class="desc">${p.desc}</p>
@@ -714,8 +740,10 @@ function openModal(p){
     <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
       ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px; padding:10px 18px;">Open live page ↗</a>` : ""}
       ${p.workflowUrl ? `<a href="${p.workflowUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Download workflow JSON ↗</a>` : ""}
+      ${(p.workflows || []).map(w => `<a href="${w.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">${w.label} ↗</a>`).join("")}
       ${p.dataUrl ? `<a href="${p.dataUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View sample data ↗</a>` : ""}
-      ${p.folderUrl ? `<a href="${p.folderUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Browse full folder (incl. README) ↗</a>` : ""}
+      ${p.readmeUrl ? `<a href="${p.readmeUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Read README ↗</a>` : ""}
+      ${p.folderUrl ? `<a href="${p.folderUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Browse full folder ↗</a>` : ""}
       ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View tracker ↗</a>` : ""}
     </div>
   `;
