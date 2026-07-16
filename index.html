@@ -303,7 +303,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="13">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="14">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -396,7 +396,8 @@ const PROJECTS = [
     errors:["Google auth scope mismatch — re-generate OAuth credentials with Sheets API enabled","Sheet range referenced incorrectly in the node"],
     tags:["google","scheduler","beginner"],
     workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/workflow.json",
-    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/good-morning-log.csv"
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/good-morning-log.csv",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1a-good-morning-google-sheets"
   },
   {
     id:2, num:"02", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
@@ -517,6 +518,16 @@ const PROJECTS = [
     prereqs:["Completed projects 01–09","Comfortable with Sheets as a database"],
     errors:["Duplicate entries counted twice during correction pass","Category sort misclassifying edge-case entries"],
     tags:["enterprise","events","practice","advanced"]
+  },
+  {
+    id:14, num:"9a", title:"Placement Portal — GitHub Audit (HTTP Node Series #1)", level:"Advanced", time:"60 min",
+    category:"HTTP Requests",
+    flow:[["Admin Manual Trigger","trigger"],["Get Pending Applicants","service"],["Audit GitHub Server","logic"],["Evaluate Scores","logic"],["Update Database Rows","service"],["Notify Student","service"]],
+    desc:"First build in a dedicated HTTP Request node series. Students register on a live HTML form (Workflow A: Webhook → Google Sheets, status = Pending). Separately, an admin-controlled batch workflow (Workflow B) reads all Pending rows, calls the GitHub REST API per student via HTTP Request to audit their public repo count, scores them, updates the sheet, and emails a personalized result — a real 'queue now, process later' pattern used to avoid hitting API rate limits.",
+    concepts:["HTTP Request node calling a live external REST API (GitHub)","Splitting a system into a 24x7 ingestion workflow and an admin-controlled batch workflow","Using Google Sheets as a buffer/queue (Status: Pending → Audited)","Manual Trigger for admin-controlled batch runs","Conditional scoring logic in a Set node","Building a personalized HTML email from live API response data"],
+    prereqs:["Completed projects 01–08","A Google Sheet with a Status column (Pending/Audited)","Gmail credential"],
+    errors:["GitHub API rate limit hit when auditing many Pending applicants in one run — batch size needs capping","Update Database Rows matching the wrong row when GitHub_Username has stray whitespace","Webhook blocked by CORS if allowedOrigins isn't set correctly for the form's domain"],
+    tags:["http","github-api","two-workflow","queue","admin-controlled","advanced"]
   }
 ];
 
