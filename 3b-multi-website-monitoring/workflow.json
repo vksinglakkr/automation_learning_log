@@ -1,0 +1,220 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minutes" }
+          ]
+        }
+      },
+      "id": "40e514a3-7074-4de4-b5c5-af1f4bc653fe",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-1120, 96]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l3-sites",
+              "name": "sites",
+              "value": "={{ [\n  { \"name\": \"NIC Kurukshetra\", \"url\": \"https://kurukshetra.nic.in\" },\n  { \"name\": \"Haryana Gov\",     \"url\": \"https://haryana.gov.in\" },\n  { \"name\": \"NIC Main\",        \"url\": \"https://nic.in\" }\n] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b423f40a-2c23-4691-9242-4bee471aa69f",
+      "name": "Set Sites List",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-896, 96]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sites",
+        "options": {}
+      },
+      "id": "4be64875-248d-4950-bfba-d66610840bfb",
+      "name": "Split Into Sites",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [-672, 96]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": { "fullResponse": true, "responseFormat": "text" }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "a84b02e4-81d3-4910-836f-ee835cf057f6",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-448, 96],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "l3-c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": { "type": "number", "operation": "gte" }
+            },
+            {
+              "id": "l3-c2",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "empty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "708e7e61-a89f-46db-a9f7-649a16bf1c26",
+      "name": "IF: Site Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-224, 96]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "l3-su1", "name": "site_name", "value": "={{ $('Split Into Sites').item.json.name }}", "type": "string" },
+            { "id": "l3-su2", "name": "url", "value": "={{ $('Split Into Sites').item.json.url }}", "type": "string" },
+            { "id": "l3-su3", "name": "status", "value": "UP", "type": "string" },
+            { "id": "l3-su4", "name": "status_code", "value": "={{ $json.statusCode }}", "type": "number" },
+            { "id": "l3-su5", "name": "checked_at", "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3219400-6558-4e85-adc4-4f069eece3c0",
+      "name": "Set: Status UP",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "l3-sd1", "name": "site_name", "value": "={{ $('Split Into Sites').item.json.name }}", "type": "string" },
+            { "id": "l3-sd2", "name": "url", "value": "={{ $('Split Into Sites').item.json.url }}", "type": "string" },
+            { "id": "l3-sd3", "name": "status", "value": "DOWN", "type": "string" },
+            { "id": "l3-sd4", "name": "status_code", "value": "={{ $json.statusCode ?? 0 }}", "type": "number" },
+            { "id": "l3-sd5", "name": "checked_at", "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}", "type": "string" },
+            { "id": "l3-sd6", "name": "notes", "value": "={{ $json.error?.message ?? ('HTTP ' + ($json.statusCode ?? 'timeout')) }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "314ef958-d900-472b-aead-6f28f1b39810",
+      "name": "Set: Status DOWN",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 192]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "953dca95-d091-4051-9137-99435a1671ec",
+      "name": "Merge UP and DOWN",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [224, 96]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "l3-dc",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "DOWN",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9e567a35-4cfe-4c61-8035-de1438c12c19",
+      "name": "IF: Status is DOWN?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [448, 96]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{}]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.1,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a website monitoring assistant. Generate a concise technical alert message when a website is down. Include site name, URL, status, error details, and a short recommendation. Keep the response under 100 words.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Website Status Alert\\n\\nSite Name: {{ $json.site_name }}\\nURL: {{ $json.url }}\\nStatus: {{ $json.status }}\\nStatus Code: {{ $json.status_code }}\\nError: {{ $json.notes }}\\nChecked At: {{ $json.checked_at }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [672, 96],
+      "id": "f963e267-8094-4a2d-b517-9d056da26160",
+      "name": "AI_Statistics_Generator2"
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_ALERT_EMAIL@example.com",
+        "subject": "=🔴 ALERT: {{ $('Set Sites List').item.json.sites[0].name }} is DOWN!",
+        "emailType": "text",
+        "message": "=⚠️ Website Down Alert!\n{{ $('Set Sites List').item.json.sites[0].name }}\nSite: \nURL: {{ $('Set Sites List').item.json.sites[0].url }}\nError: {{ $('Set: Status DOWN').item.json.status_code }}\nTime: {{ $('Schedule Trigger').item.json.timestamp }}\n\n-- n8n Monitor",
+        "options": {}
+      },
+      "id": "d922b260-4204-4a75-86a2-94b82e30d239",
+      "name": "Gmail: Send Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [896, 96]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Set Sites List", "type": "main", "index": 0 }]] },
+    "Set Sites List": { "main": [[{ "node": "Split Into Sites", "type": "main", "index": 0 }]] },
+    "Split Into Sites": { "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]] },
+    "HTTP Request": { "main": [[{ "node": "IF: Site Up?", "type": "main", "index": 0 }]] },
+    "IF: Site Up?": {
+      "main": [
+        [{ "node": "Set: Status UP", "type": "main", "index": 0 }],
+        [{ "node": "Set: Status DOWN", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set: Status UP": { "main": [[{ "node": "Merge UP and DOWN", "type": "main", "index": 0 }]] },
+    "Set: Status DOWN": { "main": [[{ "node": "Merge UP and DOWN", "type": "main", "index": 1 }]] },
+    "Merge UP and DOWN": { "main": [[{ "node": "IF: Status is DOWN?", "type": "main", "index": 0 }]] },
+    "IF: Status is DOWN?": { "main": [[{ "node": "AI_Statistics_Generator2", "type": "main", "index": 0 }]] },
+    "AI_Statistics_Generator2": { "main": [[{ "node": "Gmail: Send Alert", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
