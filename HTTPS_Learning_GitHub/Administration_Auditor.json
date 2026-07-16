@@ -1,0 +1,204 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "wb-manual",
+      "name": "Admin Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "list"
+        },
+        "sheetName": "Sheet1",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Audit_Status",
+              "operator": "equal",
+              "value": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wb-read-sheet",
+      "name": "Get Pending Applicants",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.1,
+      "position": [
+        420,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/users/{{ $json.GitHub_Username }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-Campus-Auditor"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wb-github",
+      "name": "Audit GitHub Server",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        640,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "repos_count",
+              "type": "number",
+              "value": "={{ $json.public_repos }}"
+            },
+            {
+              "name": "avatar",
+              "value": "={{ $json.avatar_url }}"
+            },
+            {
+              "name": "score",
+              "value": "={{ $json.public_repos >= 10 ? '🎯 Selected for Interviews' : '⚠️ Waitlisted (Need more repos)' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "wb-eval",
+      "name": "Evaluate Scores",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        860,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "list"
+        },
+        "sheetName": "Sheet1",
+        "updateKey": "GitHub_Username",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Audit_Status": "Audited",
+            "Total_Repos": "={{ $('Evaluate Scores').item.json.repos_count }}",
+            "Profile_Pic": "={{ $('Evaluate Scores').item.json.avatar }}",
+            "Evaluation_Score": "={{ $('Evaluate Scores').item.json.score }}"
+          },
+          "matchingColumns": [
+            "GitHub_Username"
+          ]
+        },
+        "options": {}
+      },
+      "id": "wb-update-sheet",
+      "name": "Update Database Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.1,
+      "position": [
+        1080,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get Pending Applicants').item.json.Student_Email }}",
+        "subject": "🎯 T&P Placement Drive: Your GitHub Audit Result!",
+        "emailType": "html",
+        "html": "<h3>Dear {{ $('Get Pending Applicants').item.json.Student_Name }},</h3>\n<p>Your GitHub profile (<strong>{{ $('Get Pending Applicants').item.json.GitHub_Username }}</strong>) has been audited by the T&P Cell.</p>\n<p><strong>Result:</strong> {{ $json.Evaluation_Score }}</p>\n<p><strong>Total Repositories:</strong> {{ $json.Total_Repos }}</p>\n<br>\n<img src=\"{{ $json.Profile_Pic }}\" width=\"100\" style=\"border-radius:50%;\" />\n<p>Best Regards,<br>T&P Administration, NIT Kurukshetra</p>",
+        "options": {}
+      },
+      "id": "wb-gmail",
+      "name": "Notify Student",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1300,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Admin Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Applicants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Applicants": {
+      "main": [
+        [
+          {
+            "node": "Audit GitHub Server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit GitHub Server": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Scores": {
+      "main": [
+        [
+          {
+            "node": "Update Database Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Database Rows": {
+      "main": [
+        [
+          {
+            "node": "Notify Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
