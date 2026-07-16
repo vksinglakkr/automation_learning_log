@@ -1,0 +1,95 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "37cf42f6-4e17-4577-b68e-85c4acd27997",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -288,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "l1a-wa-msg",
+              "name": "message",
+              "value": "👋 Good Morning! n8n is working perfectly. Have a great day!",
+              "type": "string"
+            },
+            {
+              "id": "l1a-wa-ts",
+              "name": "sent_at",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9eeecb6c-5e87-43bc-b6db-01899d1430a0",
+      "name": "Set Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        64
+      ],
+      "id": "6fb5fbc8-56a3-4948-9464-3c499912a23d",
+      "name": "Send a message",
+      "webhookId": "74dd1168-d6a3-4dde-b084-089e2ee41d6d"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Message": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "61b7efe9dec4b927bcefbfccd5ef26d989ec604921fbdaa87b7d95391eb60b25"
+  }
+}
