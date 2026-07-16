@@ -18,6 +18,9 @@
   --rose:#F5677A;
   --blue:#5B9DFF;
   --green:#34D399;
+  --gold:#E0A458;
+  --pink:#FF7AAE;
+  --cyan:#38BDF8;
   --text:#E7EAF0;
   --muted:#7C879C;
   --radius:14px;
@@ -394,7 +397,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 /* ===================== DATA ===================== */
 const PROJECTS = [
   {
-    id:1, num:"01", title:"Good Morning — Google Sheets", level:"Beginner", time:"20 min",
+    id:1, num:"1a", title:"Good Morning — Google Sheets", level:"Beginner", time:"20 min",
     category:"Notifications",
     flow:[["Scheduler","trigger"],["Code","logic"],["Google Sheets","service"]],
     desc:"First build: a daily scheduled message pulled from a Google Sheet. Covers n8n install, interface orientation, and Google auth setup.",
@@ -408,34 +411,41 @@ const PROJECTS = [
     readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1a-good-morning-google-sheets/README.md"
   },
   {
-    id:2, num:"02", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
+    id:2, num:"1b", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
     category:"Notifications",
     flow:[["Scheduler","trigger"],["Code","logic"],["Gmail","service"]],
     desc:"Same scheduled pattern, swapped to send via Gmail instead of reading a sheet — isolates the difference between a data source and a delivery channel.",
     concepts:["Gmail node OAuth","Sending vs. reading nodes","Reusing the Code node logic"],
     prereqs:["Completed project 01","Gmail API enabled in Google Cloud Console"],
     errors:["Gmail API not enabled on the Google Cloud project","Token expiry requiring re-authentication"],
-    tags:["gmail","scheduler","beginner"]
+    tags:["gmail","scheduler","beginner"],
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1b-good-morning-gmail/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1b-good-morning-gmail"
   },
   {
-    id:3, num:"03", title:"Good Morning — Email (SMTP)", level:"Beginner", time:"25 min",
+    id:3, num:"1c", title:"Good Morning — Email (SMTP)", level:"Beginner", time:"25 min",
     category:"Notifications",
     flow:[["Scheduler","trigger"],["Code","logic"],["Email Node","service"]],
     desc:"Delivery without relying on a Google/Gmail account — using raw SMTP and a 16-digit app password, useful when the account isn't Gmail-based.",
     concepts:["SMTP fundamentals","16-digit app password generation","Email node vs. Gmail node tradeoffs"],
     prereqs:["2-Step Verification enabled on the sending account","App password generated"],
     errors:["Using the account's normal password instead of the 16-digit app password","Wrong SMTP port for TLS vs. SSL"],
-    tags:["smtp","email","beginner"]
+    tags:["smtp","email","beginner"],
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1c-good-morning-email-smtp/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1c-good-morning-email-smtp"
   },
   {
-    id:4, num:"04", title:"Good Morning — Twilio", level:"Beginner", time:"25 min",
+    id:4, num:"1d", title:"Good Morning — Twilio", level:"Beginner", time:"25 min",
     category:"Notifications",
     flow:[["Scheduler","trigger"],["Code","logic"],["Twilio","service"]],
     desc:"Moves the same message pattern onto SMS, introducing a paid third-party API and its credential model.",
     concepts:["Twilio account setup","API key vs. auth token","SMS delivery constraints (sandbox numbers)"],
     prereqs:["Twilio trial account","Verified sandbox number"],
     errors:["Recipient number not verified in Twilio sandbox","Country code formatting mismatch"],
-    tags:["twilio","sms","beginner"]
+    tags:["twilio","sms","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1d-good-morning-twilio/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1d-good-morning-twilio/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1d-good-morning-twilio"
   },
   {
     id:5, num:"2a", title:"Motivation Story — Groq AI + Twilio WhatsApp", level:"Intermediate", time:"35 min",
@@ -445,47 +455,54 @@ const PROJECTS = [
     concepts:["Groq API integration (llama-3.3-70b-versatile)","Structured prompt design requesting multiple output sections in one response","Bilingual output generation (English + Hindi) from a single prompt","Chaining AI-generated text directly into a Twilio WhatsApp message","Reusing the Twilio delivery node from project 1d"],
     prereqs:["Groq API key","Completed project 1d (Twilio WhatsApp delivery)"],
     errors:["Malformed JSON from multiline prompt strings","Token limit exceeded on longer stories","WhatsApp sandbox session expired mid-test, same as project 1d"],
-    tags:["ai","groq","twilio","whatsapp","intermediate"]
+    tags:["ai","groq","twilio","whatsapp","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2a-motivation-story-groq-whatsapp/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/2a-motivation-story-groq-whatsapp/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/2a-motivation-story-groq-whatsapp"
   },
   {
-    id:6, num:"06", title:"Single Website Status Checker", level:"Intermediate", time:"30 min",
+    id:6, num:"3a", title:"Single Website Status Checker", level:"Intermediate", time:"30 min",
     category:"Monitoring",
     flow:[["Scheduler","trigger"],["HTTP Request","logic"],["Code","logic"],["Notify","service"]],
     desc:"Pings one site on a schedule and alerts on a non-200 response — the base pattern every later monitoring build extends.",
     concepts:["HTTP Request node","Status code handling","Conditional alerting logic"],
     prereqs:["A site URL to monitor","ntfy topic subscribed on phone"],
     errors:["Timeout not configured, causing false down-alerts","Alert firing on every run instead of only on state change"],
-    tags:["monitoring","http","intermediate"]
+    tags:["monitoring","http","intermediate"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3a-website-status-checker"
   },
   {
-    id:7, num:"07", title:"Multi-Website Monitoring", level:"Intermediate", time:"40 min",
+    id:7, num:"3b", title:"Multi-Website Monitoring", level:"Intermediate", time:"40 min",
     category:"Monitoring",
     flow:[["Scheduler","trigger"],["Split In Batches","logic"],["HTTP Request","logic"],["Code","logic"],["Google Sheets","service"],["Notify","service"]],
     desc:"Extends the single-site checker to a list of district/government sites, logging every check to a sheet and alerting only on down events.",
     concepts:["Looping over a list with Split In Batches","Logging historical status to Sheets","Reducing alert noise"],
     prereqs:["Completed project 06","List of URLs in a Google Sheet"],
     errors:["Batch size too large, hitting rate limits","Sheet row appended before status was finalized"],
-    tags:["monitoring","google","batches","intermediate"]
+    tags:["monitoring","google","batches","intermediate"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3b-multi-website-monitoring"
   },
   {
-    id:8, num:"08", title:"Database Health Checker", level:"Advanced", time:"40 min",
+    id:8, num:"3c", title:"Database Health Checker", level:"Advanced", time:"40 min",
     category:"Database",
     flow:[["Scheduler","trigger"],["Database Query","logic"],["Code","logic"],["Notify","service"]],
     desc:"Same monitoring pattern applied to a database connection — checking query latency and connectivity rather than an HTTP endpoint.",
     concepts:["Database node credentials","Query-based health checks","Latency thresholds"],
     prereqs:["Database connection string","Completed projects 06–07"],
     errors:["Credential misconfiguration blocking connection","Query timing out under load, flagged as false failure"],
-    tags:["database","monitoring","advanced"]
+    tags:["database","monitoring","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3c-database-health-checker"
   },
   {
-    id:9, num:"09", title:"Leave Application Automation", level:"Advanced", time:"45 min",
+    id:9, num:"4", title:"Leave Application Automation", level:"Advanced", time:"45 min",
     category:"Business",
     flow:[["Form","trigger"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
     desc:"First workflow with a human approval step — an employee submits a form, it's logged, and an approval email routes back to update status.",
     concepts:["n8n Form trigger","Multi-step approval logic","Status updates written back to Sheets"],
     prereqs:["Completed projects 01 & 02"],
     errors:["Row lookup failing on duplicate names","Approval link not validating the correct row"],
-    tags:["form","business","google","advanced"]
+    tags:["form","business","google","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/4-leave-application"
   },
   {
     id:10, num:"5", title:"Gita Wisdom — AI Q&A", level:"Intermediate", time:"30 min",
@@ -495,37 +512,43 @@ const PROJECTS = [
     concepts:["Webhook trigger accepting structured JSON (question, language, style)","Dynamic system-prompt construction based on user-selected tone/style","Prompt-level guardrails: instructing the model to ground answers in the source text and never fabricate a citation","Parsing a trailing verse citation out of free-form AI text with a regex","CORS handling (Access-Control-Allow-Origin) for a public-facing webhook"],
     prereqs:["Groq API key","A front-end form posting JSON with question/language/style fields to the webhook URL"],
     errors:["Webhook left in Test mode instead of Production, breaking the live page","Citation regex not matching if the model formats 'BG 2.47' with extra punctuation or on a non-final line","No question provided — the Code node throws explicitly, which needs a matching error-response path on the frontend"],
-    tags:["ai","groq","gita","webhook","intermediate"]
+    tags:["ai","groq","gita","webhook","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/5-gita-wisdom-ai-qa/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/5-gita-wisdom-ai-qa/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/5-gita-wisdom-ai-qa"
   },
   {
-    id:11, num:"11", title:"Complaint System — Aadhar, Ration, PPP, Pension, Certificates", level:"Advanced", time:"50 min",
+    id:11, num:"6", title:"Complaint System — Aadhar, Ration, PPP, Pension, Certificates", level:"Advanced", time:"50 min",
     category:"Business",
     flow:[["Form","trigger"],["AI (Groq)","ai"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
     desc:"Applicants submit a complaint (Aadhar Card, Ration Card, PPP, Pension, Certificates, etc.) through an HTML form. A free-text description can be improved by AI before submission. The workflow auto-categorizes by department, routes the complaint with applicant details for action, logs it to a sheet, and exposes a tracker so the applicant can check status.",
     concepts:["AI-assisted text refinement before submission","Rule-based department categorization","Routing with applicant context attached","Building a status tracker on top of a Sheets log"],
     prereqs:["Completed project 09 (form + approval pattern)","Department email list mapped to categories"],
     errors:["Category keywords overlapping across departments, causing misroutes","Tracker showing stale status when the sheet update and notification steps run out of order"],
-    tags:["complaint","ai","government","google","gmail","advanced"]
+    tags:["complaint","ai","government","google","gmail","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6-complaint-system"
   },
   {
-    id:12, num:"12", title:"WhatsApp VIP Alert", level:"Advanced", time:"35 min",
+    id:12, num:"7", title:"WhatsApp VIP Alert", level:"Advanced", time:"35 min",
     category:"Monitoring",
     flow:[["Webhook","trigger"],["Code","logic"],["Switch","logic"],["Notify","service"]],
     desc:"Incoming WhatsApp messages are relayed through ntfy. The workflow checks the sender against a VIP list (DC, SIO, etc.) or scans content for priority keywords (e.g. 'flood alert') and escalates matching messages instantly to the concerned authority — built for situations like flood control where a message can't wait to be noticed manually.",
     concepts:["Relaying WhatsApp messages through ntfy as a trigger source","Sender-based VIP matching vs. keyword-based content matching","Switch node for multi-path escalation","Instant push notification to a concerned authority"],
     prereqs:["ntfy topic receiving forwarded WhatsApp messages","List of VIP senders and priority keywords"],
     errors:["Keyword match too broad, triggering on unrelated messages containing the word","VIP number format mismatch (missing country code) causing missed matches"],
-    tags:["whatsapp","ntfy","alert","monitoring","advanced"]
+    tags:["whatsapp","ntfy","alert","monitoring","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/7-whatsapp-vip-alert"
   },
   {
-    id:13, num:"13", title:"Hackathon Management System (Practice)", level:"Enterprise", time:"Multi-day",
+    id:13, num:"8", title:"Hackathon Management System (Practice)", level:"Enterprise", time:"Multi-day",
     category:"Enterprise",
     flow:[["Form","trigger"],["Validate & Sort","logic"],["Support Desk","service"],["FAQ Engine","service"],["Coupon Manager","service"]],
     desc:"A virtual, practice-only build simulating full event management: correcting entry errors on existing and new registrations, sorting into three categories (e.g. admit card issues), running a support desk (WiFi, parking, laptop), an FAQ layer, and event-day coupon and activity management.",
     concepts:["Data validation & error correction at scale","Multi-category sorting logic","Support-ticket style routing","Event-day operational automation"],
     prereqs:["Completed projects 01–09","Comfortable with Sheets as a database"],
     errors:["Duplicate entries counted twice during correction pass","Category sort misclassifying edge-case entries"],
-    tags:["enterprise","events","practice","advanced"]
+    tags:["enterprise","events","practice","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/8-hackathon-management-practice"
   },
   {
     id:14, num:"9a", title:"Placement Portal — GitHub Audit (HTTP Node Series #1)", level:"Advanced", time:"60 min",
@@ -672,21 +695,25 @@ function renderProjects(){
   }
 
   const badgeClass = {Beginner:"badge-beginner", Intermediate:"badge-intermediate", Advanced:"badge-advanced", Enterprise:"badge-enterprise"};
-  const CATEGORY_STYLE = {
-    "Notifications": {color:"var(--teal)", icon:"🔔"},
-    "AI": {color:"var(--rose)", icon:"✨"},
-    "Monitoring": {color:"var(--amber)", icon:"📡"},
-    "Database": {color:"var(--violet)", icon:"🗄️"},
-    "Business": {color:"var(--blue)", icon:"🗂️"},
-    "Enterprise": {color:"var(--violet)", icon:"🏛️"},
-    "HTTP Requests": {color:"var(--green)", icon:"🌐"}
+  const GROUP_STYLE = {
+    1: {color:"var(--teal)",   icon:"🔔", label:"Good Morning"},
+    2: {color:"var(--rose)",   icon:"✨", label:"Motivation"},
+    3: {color:"var(--amber)",  icon:"📡", label:"Monitoring"},
+    4: {color:"var(--blue)",   icon:"🗂️", label:"Leave App"},
+    5: {color:"var(--violet)", icon:"🕉️", label:"Gita Wisdom"},
+    6: {color:"var(--green)",  icon:"📋", label:"Complaint"},
+    7: {color:"var(--pink)",   icon:"📱", label:"WhatsApp"},
+    8: {color:"var(--gold)",   icon:"🏛️", label:"Hackathon"},
+    9: {color:"var(--cyan)",   icon:"🌐", label:"HTTP Series"}
   };
+  const getGroup = (num) => parseInt(num, 10) || 0;
 
   filtered.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "card";
     card.style.animationDelay = (i * 0.06) + "s";
-    const catStyle = CATEGORY_STYLE[p.category] || {color:"var(--muted)", icon:"⚙️"};
+    const groupNum = getGroup(p.num);
+    const catStyle = GROUP_STYLE[groupNum] || {color:"var(--muted)", icon:"⚙️", label:p.category};
     card.style.borderLeft = `3px solid ${catStyle.color}`;
     const flowHtml = p.flow.map(([label,type], idx) =>
       (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
