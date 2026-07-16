@@ -1,0 +1,350 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "igm-registration",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e90b96cc-431d-4594-91dd-662551fae934",
+      "name": "Registration Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        80
+      ],
+      "webhookId": "igm-registration"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst errors = [];\nconst student_name = (body.student_name || '').toString().trim();\nconst contact_email = (body.contact_email || '').toString().trim();\nconst mobile_number = (body.mobile_number || '').toString().trim();\nconst college = (body.college || '').toString().trim();\nconst raw_skills = (body.raw_skills || '').toString().trim();\nconst hackathon_idea = (body.hackathon_idea || '').toString().trim();\n\nif (student_name.length < 2) errors.push('Invalid or missing student_name');\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contact_email)) errors.push('Invalid contact_email');\nif (!/^[6-9]\\d{9}$/.test(mobile_number)) errors.push('Invalid mobile_number (expect 10 digits, starting 6-9)');\nif (college.length < 2) errors.push('Invalid or missing college');\nif (raw_skills.length < 2) errors.push('raw_skills is required');\nif (hackathon_idea.length < 10) errors.push('hackathon_idea is too short');\n\nconst now = new Date();\nconst registration_id = 'IGM-' + now.getTime();\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    registration_id,\n    student_name,\n    contact_email,\n    mobile_number,\n    college,\n    raw_skills,\n    hackathon_idea,\n    submitted_at: body.submitted_at || now.toISOString()\n  }\n}];"
+      },
+      "id": "22224e5e-92ca-47ce-9e11-cf8b91873c28",
+      "name": "Validate & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "34a71f84-d110-467b-bdcc-809a51bc2204",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"error\", \"errors\": $json.errors } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "3fb3ab09-51b9-4769-b61e-8ba1bfd2d827",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.3,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an assistant for the International Gita Mahotsav student hackathon at NIC Kurukshetra. Given a student's raw skills text and hackathon idea, return STRICT JSON only with keys: idea_summary (one sentence, under 20 words, in English), idea_category (one of: AI/ML, Web, Mobile, IoT, Data & Analytics, Civic Tech, Other), skill_tags (comma-separated cleaned list, max 8 skills, title case), idea_clarity_score (integer 1-5, 5 = very clear and feasible). Return JSON only, no markdown, no prose, no extra keys.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": (\"Skills: \" + $json.raw_skills + \"\\nIdea: \" + $json.hackathon_idea)\n    }\n  ]\n} }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "9d93b076-df45-424b-8357-c6dac335c3fd",
+      "name": "Groq - Enrich Idea",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const groqResponse = $input.first().json;\nconst reg = $('Validate & Normalize').first().json;\n\nlet ai = {\n  idea_summary: '',\n  idea_category: '',\n  skill_tags: '',\n  idea_clarity_score: ''\n};\n\ntry {\n  const content = groqResponse.choices[0].message.content;\n  const parsed = JSON.parse(content);\n  ai = { ...ai, ...parsed };\n} catch (e) {\n  ai.idea_summary = 'AI enrichment unavailable';\n  ai.idea_category = 'Other';\n}\n\nreturn [{\n  json: {\n    registration_id: reg.registration_id,\n    submitted_at: reg.submitted_at,\n    student_name: reg.student_name,\n    contact_email: reg.contact_email,\n    mobile_number: reg.mobile_number,\n    college: reg.college,\n    raw_skills: reg.raw_skills,\n    ai_skill_tags: ai.skill_tags,\n    hackathon_idea: reg.hackathon_idea,\n    ai_idea_summary: ai.idea_summary,\n    ai_idea_category: ai.idea_category,\n    ai_clarity_score: ai.idea_clarity_score\n  }\n}];"
+      },
+      "id": "88394d93-76a7-4d4b-984b-8e3c6934d4b6",
+      "name": "Parse Groq Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "172yKBw9rW2WNc2L8FNoMOAQvxG51ZO8ncQBOnERP7Kg",
+          "mode": "list",
+          "cachedResultName": "Hackthon",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/172yKBw9rW2WNc2L8FNoMOAQvxG51ZO8ncQBOnERP7Kg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 251053864,
+          "mode": "list",
+          "cachedResultName": "query_log_template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/172yKBw9rW2WNc2L8FNoMOAQvxG51ZO8ncQBOnERP7Kg/edit#gid=251053864"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_text",
+              "displayName": "query_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact",
+              "displayName": "contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "matched_cache_id",
+              "displayName": "matched_cache_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_answer",
+              "displayName": "ai_answer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reviewed_by",
+              "displayName": "reviewed_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "7f1cf7ba-a532-46c4-a01e-adc48243e678",
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zqCFkP1mXpyrkeQ2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"registration_id\": $json.registration_id, \"message\": \"Registration received\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "1489b896-1d3c-4277-9714-b5566cdb9e0e",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Registration Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Groq - Enrich Idea",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq - Enrich Idea": {
+      "main": [
+        [
+          {
+            "node": "Parse Groq Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Groq Response": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "61b7efe9dec4b927bcefbfccd5ef26d989ec604921fbdaa87b7d95391eb60b25"
+  }
+}
