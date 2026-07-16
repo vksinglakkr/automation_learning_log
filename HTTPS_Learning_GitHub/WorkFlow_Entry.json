@@ -1,0 +1,68 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "submit-placement-app",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "wa-webhook",
+      "name": "Webhook Ingestion",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "list",
+          "cachedResultName": "T&P_Placement_Drive_2026"
+        },
+        "sheetName": "Sheet1",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Student_Name": "={{ $json.body.student_name }}",
+            "Student_Email": "={{ $json.body.student_email }}",
+            "Mobile_Number": "={{ $json.body.student_phone }}",
+            "College_Name": "={{ $json.body.student_college }}",
+            "GitHub_Username": "={{ $json.body.github_username }}",
+            "Registration_Date": "={{ $now.format('yyyy-MM-dd') }}",
+            "Audit_Status": "Pending"
+          },
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "wa-sheet",
+      "name": "Append to Database",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.1,
+      "position": [
+        480,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Append to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
