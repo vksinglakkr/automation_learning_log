@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-improve-only",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "6f21e8fc-27a8-4352-a056-1bb417b9da75",
+      "name": "AI Preview Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        368
+      ],
+      "webhookId": "ai-improve-only"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a government complaint assistant. Rewrite this complaint formally in the SAME language (Hindi/English/Punjabi). Start with Respected Sir/Madam. Keep all facts. Max 100 words. Return ONLY the improved text, nothing else.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Name: {{ $json.body.name }}\\nAddress: {{ $json.body.address }}\\nCategory: {{ $json.body.category }}\\nLanguage: {{ $json.body.language }}\\nComplaint: {{ $json.body.complaint }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "4427e1c7-6b64-4a5b-9b99-7cc5fcbc9383",
+      "name": "AI Preview (for HTML form button)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        368
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIALS_ID",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ improved: $json.choices[0].message.content }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e502eb45-438a-432e-9472-2745d80fccba",
+      "name": "Return AI Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        368
+      ]
+    }
+  ],
+  "connections": {
+    "AI Preview Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Preview (for HTML form button)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Preview (for HTML form button)": {
+      "main": [
+        [
+          {
+            "node": "Return AI Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
