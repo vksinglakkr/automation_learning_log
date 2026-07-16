@@ -310,7 +310,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="14">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="15">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -438,14 +438,14 @@ const PROJECTS = [
     tags:["twilio","sms","beginner"]
   },
   {
-    id:5, num:"05", title:"Motivation Story — Groq AI", level:"Intermediate", time:"35 min",
+    id:5, num:"2a", title:"Motivation Story — Groq AI + Twilio WhatsApp", level:"Intermediate", time:"35 min",
     category:"AI",
-    flow:[["Scheduler","trigger"],["Code","logic"],["AI (Groq)","ai"],["Gmail","service"]],
-    desc:"First AI-generated content build — a scheduled motivational story written by Groq's LLM and emailed automatically. Introduces prompt design inside a workflow.",
-    concepts:["Groq API integration","Prompt construction in n8n","Chaining AI output into a delivery node","ntfy setup & subscription for testing alerts"],
-    prereqs:["Groq API key","Completed project 02 (Gmail delivery)"],
-    errors:["Malformed JSON from multiline prompt strings","Token limit exceeded on longer stories"],
-    tags:["ai","groq","gmail","intermediate"]
+    flow:[["Scheduler","trigger"],["Set Message","logic"],["Groq (Llama 3)","ai"],["Twilio: Send WhatsApp","service"]],
+    desc:"First AI-generated content build — a scheduled motivational story with a one-line lesson and a bilingual (English + Hindi) Good Morning wish, written by Groq's Llama 3.3 model and delivered via Twilio WhatsApp. Introduces structured multi-part prompt design and reuses the Twilio delivery pattern from 1d.",
+    concepts:["Groq API integration (llama-3.3-70b-versatile)","Structured prompt design requesting multiple output sections in one response","Bilingual output generation (English + Hindi) from a single prompt","Chaining AI-generated text directly into a Twilio WhatsApp message","Reusing the Twilio delivery node from project 1d"],
+    prereqs:["Groq API key","Completed project 1d (Twilio WhatsApp delivery)"],
+    errors:["Malformed JSON from multiline prompt strings","Token limit exceeded on longer stories","WhatsApp sandbox session expired mid-test, same as project 1d"],
+    tags:["ai","groq","twilio","whatsapp","intermediate"]
   },
   {
     id:6, num:"06", title:"Single Website Status Checker", level:"Intermediate", time:"30 min",
@@ -488,13 +488,13 @@ const PROJECTS = [
     tags:["form","business","google","advanced"]
   },
   {
-    id:10, num:"10", title:"Gita Wisdom — AI Q&A", level:"Intermediate", time:"30 min",
+    id:10, num:"5", title:"Gita Wisdom — AI Q&A", level:"Intermediate", time:"30 min",
     category:"AI",
-    flow:[["Webhook","trigger"],["Code","logic"],["AI (Groq)","ai"],["Respond to Webhook","service"]],
-    desc:"A simple HTML page where a visitor types a question — 'What does the Gita say about Ahimsa?', 'What is Karma?' — and gets an answer back in a dialog modal, powered by a Groq-backed prompt grounded in Gita themes.",
-    concepts:["Webhook trigger from a plain HTML form","Prompt design for scoped/topic-specific answers","Returning AI output synchronously via Respond to Webhook","Rendering the response in a JS modal on the front end"],
-    prereqs:["Groq API key","Basic HTML form with fetch() call to the webhook URL"],
-    errors:["Webhook left in Test mode instead of Production, breaking the live page","No fallback message when the AI response is empty or off-topic"],
+    flow:[["Webhook","trigger"],["Build Prompt","logic"],["Ask Groq","ai"],["Extract Answer","logic"],["Respond","service"]],
+    desc:"A visitor submits a question — 'What does the Gita say about Ahimsa?', 'What is Karma?' — along with a language choice (English/Hindi) and a tone style (simple/reflective/scholarly). The workflow builds a style-specific system prompt, asks Groq, then extracts the answer and pulls out a single verse citation (e.g. 'BG 2.47') if the model included one, returning clean JSON for the front end to render.",
+    concepts:["Webhook trigger accepting structured JSON (question, language, style)","Dynamic system-prompt construction based on user-selected tone/style","Prompt-level guardrails: instructing the model to ground answers in the source text and never fabricate a citation","Parsing a trailing verse citation out of free-form AI text with a regex","CORS handling (Access-Control-Allow-Origin) for a public-facing webhook"],
+    prereqs:["Groq API key","A front-end form posting JSON with question/language/style fields to the webhook URL"],
+    errors:["Webhook left in Test mode instead of Production, breaking the live page","Citation regex not matching if the model formats 'BG 2.47' with extra punctuation or on a non-final line","No question provided — the Code node throws explicitly, which needs a matching error-response path on the frontend"],
     tags:["ai","groq","gita","webhook","intermediate"]
   },
   {
@@ -536,12 +536,22 @@ const PROJECTS = [
     prereqs:["Completed projects 01–08","A Google Sheet with a Status column (Pending/Audited)","Gmail credential"],
     errors:["GitHub API rate limit hit when auditing many Pending applicants in one run — batch size needs capping","Update Database Rows matching the wrong row when GitHub_Username has stray whitespace","Webhook blocked by CORS if allowedOrigins isn't set correctly for the form's domain"],
     tags:["http","github-api","two-workflow","queue","admin-controlled","advanced"],
-    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/HTTPS_Learning_GitHub/index.html",
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/9a-github-audit-placement-portal/index.html",
     workflows:[
-      {label:"Download Workflow A (Ingestion)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/HTTPS_Learning_GitHub/WorkFlow_Entry.json"},
-      {label:"Download Workflow B (Admin Auditor)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/HTTPS_Learning_GitHub/Administration_Auditor.json"}
+      {label:"Download Workflow A (Ingestion)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9a-github-audit-placement-portal/WorkFlow_Entry.json"},
+      {label:"Download Workflow B (Admin Auditor)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9a-github-audit-placement-portal/Administration_Auditor.json"}
     ],
-    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/HTTPS_Learning_GitHub"
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9a-github-audit-placement-portal"
+  },
+  {
+    id:15, num:"3d", title:"Website Up/Down Monitor — AI Alerts (Groq)", level:"Advanced", time:"45 min",
+    category:"Monitoring",
+    flow:[["Every 5 Minutes","trigger"],["Check Website","logic"],["Compare With Previous","logic"],["Log Check to Sheet","service"],["Groq Alert","ai"],["Send Email","service"]],
+    desc:"A state-aware upgrade to the basic status checker: checks every 5 minutes, compares the current result against the last logged row in Google Sheets, and only fires an alert at the exact moment the site goes down or recovers — never on every single check. Groq writes a short bilingual (English + Hindi) alert or recovery notice, sent via Gmail.",
+    concepts:["Comparing current vs. previous state across scheduled runs to avoid repeat alerts","IF node branching on boolean transition flags (just_went_down / just_recovered)","continueOnFail + neverError options for resilient HTTP checks that don't crash the workflow","AI-generated bilingual alert text via Groq, triggered only on state transitions","Separate down-alert and recovery-notice branches with independent email templates"],
+    prereqs:["Completed project 3a (basic single-site checker)","Groq API credential","Gmail credential","A Google Sheet with a SiteLog tab"],
+    errors:["Read Last Status returning rows in the wrong order without a sort, breaking the 'last row' comparison","AI request failing silently if Groq's response shape changes — the Code node's fallback text catches this, but worth testing","Repeated down-alerts if the transition flags aren't correctly reset between runs"],
+    tags:["monitoring","http","ai","groq","gmail","state-tracking","advanced"]
   }
 ];
 
