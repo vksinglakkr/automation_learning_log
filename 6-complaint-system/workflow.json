@@ -1,0 +1,312 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// FIX: When no record found, Google Sheets returns empty object {}\n// We check if Email ID column exists and has a value\nconst emailId = $input.item.json['Email ID'];\nconst isDuplicate = emailId !== undefined && emailId !== null && emailId !== '';\n\nreturn {\n  json: {\n    ...$input.item.json,\n    isDuplicate: isDuplicate\n  }\n};"
+      },
+      "id": "b59f3e56-3276-4ed5-b668-a7c2a1e8927c",
+      "name": "Check Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-832, 2288]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Complaint Email').item.json.id }}",
+        "labelIds": ["REPLACE_WITH_YOUR_GMAIL_LABEL_ID"]
+      },
+      "id": "6421af37-cf50-4a7d-ad33-d209978ee404",
+      "name": "Label — Forwarded for Action",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [832, 2048],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "mode": "everyMinute" }]
+        },
+        "filters": {
+          "labelIds": ["INBOX"],
+          "q": "is:unread -in:sent -from:me -subject:\"re:\" -subject:\"fwd:\" -subject:\"fw:\" -subject:\"auto-reply\" -subject:\"out of office\" -subject:\"delivery\" -subject:\"noreply\" after:2026/06/11 (subject:complaint OR subject:complain OR subject:shikayat OR subject:शिकायत OR subject:grievance OR subject:grieve OR subject:application OR subject:request OR subject:problem OR subject:issue OR subject:distress OR subject:help OR subject:pension OR subject:ration OR subject:revenue OR subject:aadhaar OR subject:aadhar OR subject:ppp OR subject:cred OR subject:pareshani OR subject:pareshan OR subject:appeal)"
+        }
+      },
+      "id": "0f30178b-307e-4308-928d-0de8b6bffec3",
+      "name": "New Complaint Email",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [-1312, 2288],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Complaints",
+          "mode": "list",
+          "cachedResultName": "Complaints"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email ID",
+              "lookupValue": "={{ $('New Complaint Email').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "87018e39-82fb-4aee-ab10-0ed38cf232bc",
+      "name": "Check Already Processed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [-1072, 2288],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "dup-check",
+              "leftValue": "={{ $json.isDuplicate }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equal" }
+            },
+            {
+              "id": "494d6559-d5d1-412c-b028-8cac7754217b",
+              "leftValue": "={{ $('New Complaint Email').item.json.Subject }}",
+              "rightValue": "Complaint",
+              "operator": { "type": "string", "operation": "contains" }
+            },
+            {
+              "id": "5e0bc5de-42ae-4822-9f74-ad43956768dd",
+              "leftValue": "={{ $('New Complaint Email').item.json.snippet }}",
+              "rightValue": "Complaint",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "8ec7148b-7daf-40c0-a370-23c86820e663",
+      "name": "Is New Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-592, 2288]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 500,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an assistant to District Administration Kurukshetra. First check if this is a genuine complaint, grievance, application, or request from a citizen. If it is NOT genuine (e.g. newsletter, promotional, automated, OTP, notification, receipt, invoice), respond with ONLY: NOT_A_COMPLAINT\\n\\nIf it IS genuine, respond ONLY in this exact format:\\n\\nDEPARTMENT: [CRED/PENSION/AADHAAR/RATION/REVENUE/PPP/OTHERS]\\nCATEGORY: [brief category]\\nPRIORITY: [High/Medium/Low]\\nLOCATION: [location if mentioned, else Not specified]\\nSUMMARY: [2-line summary]\\nACTION: [recommended action in one line]\\n\\nDepartment rules:\\n- CRED: credit, loan, bank, finance, money, recovery\\n- PENSION: pension, retirement, old age, senior citizen\\n- AADHAAR: aadhaar, aadhar, uid, biometric, enrollment\\n- RATION: ration, PDS, food supply, ration card, wheat, grain\\n- REVENUE: land, property, fard, mutation, jamabandi, intkal, registry, khasra\\n- PPP: parivar pehchan patra, PPP, family id, pehchan\\n- OTHERS: water, electricity, roads, sanitation, or anything else\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"From: {{ $('New Complaint Email').item.json.From }}\\nSubject: {{ $('New Complaint Email').item.json.Subject }}\\nEmail Body:\\n{{ $('New Complaint Email').item.json.text !== undefined && $('New Complaint Email').item.json.text !== '' ? $('New Complaint Email').item.json.text : $('New Complaint Email').item.json.snippet }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "b448ead0-2792-4d6a-8825-dd1c4493b5b4",
+      "name": "AI Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-352, 2208],
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [
+            {
+              "id": "complaint-check",
+              "leftValue": "={{ $json.choices[0].message.content.toUpperCase() }}",
+              "rightValue": "NOT_A_COMPLAINT",
+              "operator": { "type": "string", "operation": "notContains" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6656b24d-7479-4bc2-92f1-c003777cf7ab",
+      "name": "Is Genuine Complaint?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-112, 2208]
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('New Complaint Email').item.json.id }}"
+      },
+      "id": "51f4e601-7894-429d-8437-af11791fedaf",
+      "name": "Mark Non-Complaint as Read",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [128, 2368],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const aiText = $input.item.json.choices[0].message.content;\n\nconst deptMatch = aiText.match(/DEPARTMENT:\\s*(\\w+)/i);\nconst dept = deptMatch ? deptMatch[1].toUpperCase().trim() : 'OTHERS';\n\nconst routingMap = {\n  'CRED':    'REPLACE_WITH_CRED_OFFICER_EMAIL@example.gov.in',\n  'PENSION': 'REPLACE_WITH_PENSION_OFFICER_EMAIL@example.gov.in',\n  'AADHAAR': 'REPLACE_WITH_AADHAAR_OFFICER_EMAIL@example.gov.in',\n  'RATION':  'REPLACE_WITH_RATION_OFFICER_EMAIL@example.gov.in',\n  'REVENUE': 'REPLACE_WITH_REVENUE_OFFICER_EMAIL@example.gov.in',\n  'PPP':     'REPLACE_WITH_PPP_OFFICER_EMAIL@example.gov.in',\n  'OTHERS':  'REPLACE_WITH_DEFAULT_OFFICER_EMAIL@example.gov.in'\n};\n\nconst officerLabels = {\n  'CRED':    'ADC (CRED)',\n  'PENSION': 'DSWO (Pension)',\n  'AADHAAR': 'ADC (Aadhaar)',\n  'RATION':  'DFSC (Ration)',\n  'REVENUE': 'DRO (Revenue)',\n  'PPP':     'ADC (PPP)',\n  'OTHERS':  'DC Office'\n};\n\nconst officerEmail = routingMap[dept] || routingMap['OTHERS'];\nconst officerLabel = officerLabels[dept] || officerLabels['OTHERS'];\n\nreturn {\n  json: {\n    ...$input.item.json,\n    routedTo: officerEmail,\n    officerLabel: officerLabel,\n    department: dept,\n    aiAnalysis: aiText\n  }\n};"
+      },
+      "id": "5e9d18ef-3952-46eb-bd55-7d4c9e2cf285",
+      "name": "Department Router",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [128, 2128]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Complaints",
+          "mode": "list",
+          "cachedResultName": "Complaints"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) }}",
+            "Email ID": "={{ $('New Complaint Email').item.json.id }}",
+            "From": "={{ $('New Complaint Email').item.json.From }}",
+            "Subject": "={{ $('New Complaint Email').item.json.Subject }}",
+            "Department": "={{ $json.department }}",
+            "Routed To": "={{ $json.routedTo }}",
+            "AI Summary": "={{ $json.aiAnalysis }}",
+            "Reference": "=#{{ $('New Complaint Email').item.json.id.slice(-8).toUpperCase() }}",
+            "Status": "=Forwarded to {{ $json.officerLabel }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "Email ID", "displayName": "Email ID", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Timestamp", "displayName": "Timestamp", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "From", "displayName": "From", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Subject", "displayName": "Subject", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Department", "displayName": "Department", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Routed To", "displayName": "Routed To", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "AI Summary", "displayName": "AI Summary", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Reference", "displayName": "Reference", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "48c8a698-4d3e-4ff8-916f-3c8f29fbc9e4",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [368, 2128],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('New Complaint Email').item.json.From }}",
+        "subject": "=Complaint Received - Reference #{{ $('New Complaint Email').item.json.id.slice(-8).toUpperCase() }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: #1a237e; padding: 20px; border-radius: 8px 8px 0 0;\">\n    <h2 style=\"color: white; margin: 0;\">District Administration Kurukshetra</h2>\n    <p style=\"color: #c5cae9; margin: 4px 0 0;\">Complaint Acknowledgement</p>\n  </div>\n  <div style=\"background: #ffffff; padding: 24px; border: 1px solid #e0e0e0;\">\n    <p>Dear Citizen,</p>\n    <p>Your complaint has been received and registered with District Administration Kurukshetra.</p>\n    <table style=\"width:100%; font-size:14px; border-collapse:collapse; margin: 16px 0;\">\n      <tr style=\"background:#e8eaf6;\"><td style=\"padding:10px 12px; font-weight:bold;\">Reference Number</td><td style=\"padding:10px 12px; font-weight:bold; color:#1a237e;\">#{{ $('New Complaint Email').item.json.id.slice(-8).toUpperCase() }}</td></tr>\n      <tr><td style=\"padding:10px 12px;\">Subject</td><td style=\"padding:10px 12px;\">{{ $('New Complaint Email').item.json.Subject }}</td></tr>\n      <tr style=\"background:#f5f5f5;\"><td style=\"padding:10px 12px;\">Department</td><td style=\"padding:10px 12px;\">{{ $('Department Router').item.json.officerLabel }}</td></tr>\n      <tr><td style=\"padding:10px 12px;\">Received On</td><td style=\"padding:10px 12px;\">{{ new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) }}</td></tr>\n      <tr style=\"background:#f5f5f5;\"><td style=\"padding:10px 12px;\">Status</td><td style=\"padding:10px 12px;\"><span style=\"background:#fff3e0; color:#e65100; padding:2px 10px; border-radius:12px; font-size:13px;\">Forwarded to {{ $('Department Router').item.json.officerLabel }}</span></td></tr>\n    </table>\n    <p>Your complaint has been forwarded to the concerned officer. You will be contacted shortly.</p>\n    <p style=\"color:#666;\">Jai Hind | जय हिन्द</p>\n  </div>\n  <div style=\"background:#f5f5f5; padding:12px; text-align:center; border-radius:0 0 8px 8px;\">\n    <p style=\"color:#999; font-size:12px; margin:0;\">District Administration Kurukshetra, Haryana</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "a46abb3e-ff8a-4d19-99c5-ddc5d6b9005b",
+      "name": "Acknowledge to Citizen",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [608, 2208],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Department Router').item.json.routedTo }}",
+        "subject": "=[ACTION REQUIRED] {{ $('Department Router').item.json.department }} Complaint: {{ $('New Complaint Email').item.json.Subject }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: #1a237e; padding: 20px; border-radius: 8px 8px 0 0;\">\n    <h2 style=\"color: white; margin: 0;\">District Administration Kurukshetra</h2>\n    <p style=\"color: #c5cae9; margin: 4px 0 0;\">Complaint Forwarding — {{ $('Department Router').item.json.officerLabel }}</p>\n  </div>\n  <div style=\"background: #fff8e1; border: 1px solid #ffe082; padding: 16px;\">\n    <strong style=\"color: #e65100;\">ACTION REQUIRED — New {{ $('Department Router').item.json.department }} Complaint</strong>\n  </div>\n  <div style=\"background: #ffffff; padding: 24px; border: 1px solid #e0e0e0;\">\n    <table style=\"width:100%; font-size:14px; border-collapse:collapse; margin-bottom:20px;\">\n      <tr style=\"background:#f5f5f5;\"><td style=\"padding:8px 12px; font-weight:bold; width:140px;\">Reference</td><td style=\"padding:8px 12px; color:#1a237e; font-weight:bold;\">#{{ $('New Complaint Email').item.json.id.slice(-8).toUpperCase() }}</td></tr>\n      <tr><td style=\"padding:8px 12px; font-weight:bold;\">Received</td><td style=\"padding:8px 12px;\">{{ new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}) }}</td></tr>\n      <tr style=\"background:#f5f5f5;\"><td style=\"padding:8px 12px; font-weight:bold;\">From</td><td style=\"padding:8px 12px;\">{{ $('New Complaint Email').item.json.From }}</td></tr>\n      <tr><td style=\"padding:8px 12px; font-weight:bold;\">Subject</td><td style=\"padding:8px 12px;\">{{ $('New Complaint Email').item.json.subject }}</td></tr>\n      <tr style=\"background:#f5f5f5;\"><td style=\"padding:8px 12px; font-weight:bold;\">Department</td><td style=\"padding:8px 12px;\"><span style=\"background:#e8eaf6; color:#1a237e; padding:2px 10px; border-radius:12px;\">{{ $('Department Router').item.json.department }}</span></td></tr>\n    </table>\n    <div style=\"background:#e8f5e9; border-left:4px solid #2e7d32; padding:16px; margin-bottom:20px; border-radius:0 8px 8px 0;\">\n      <strong style=\"color:#1b5e20;\">AI Analysis:</strong><br/><br/>\n      <pre style=\"font-family:Arial; font-size:13px; white-space:pre-wrap; margin:0; color:#2e7d32;\">{{ $('Department Router').item.json.aiAnalysis }}</pre>\n    </div>\n    <div style=\"background:#fafafa; border:1px solid #e0e0e0; padding:16px; border-radius:8px; margin-bottom:16px;\">\n      <strong>Original Complaint:</strong><br/><br/>\n      <p style=\"font-size:13px; color:#555; white-space:pre-wrap;\">{{ $('New Complaint Email').item.json.text !== undefined && $('New Complaint Email').item.json.text !== '' ? $('New Complaint Email').item.json.text : $('New Complaint Email').item.json.snippet }}</p>\n    </div>\n    <p style=\"color:#666; font-size:12px;\">Logged in Complaints Register. Please take action and update status.</p>\n  </div>\n  <div style=\"background:#f5f5f5; padding:12px; text-align:center; border-radius:0 0 8px 8px;\">\n    <p style=\"color:#999; font-size:12px; margin:0;\">Automated Complaint Management System | District Administration Kurukshetra</p>\n  </div>\n</div>",
+        "options": {
+          "replyTo": "={{ $('New Complaint Email').item.json.From }}"
+        }
+      },
+      "id": "f541b715-5c81-400d-8e0e-70fc69185aeb",
+      "name": "Forward to Officer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [608, 2048],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('New Complaint Email').item.json.id }}"
+      },
+      "id": "21536270-23d5-4328-95f2-1354498c37f4",
+      "name": "Mark Email as Read",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1088, 2128],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    }
+  ],
+  "connections": {
+    "Check Result": { "main": [[{ "node": "Is New Email?", "type": "main", "index": 0 }]] },
+    "Label — Forwarded for Action": { "main": [[{ "node": "Mark Email as Read", "type": "main", "index": 0 }]] },
+    "New Complaint Email": { "main": [[{ "node": "Check Already Processed", "type": "main", "index": 0 }]] },
+    "Check Already Processed": { "main": [[{ "node": "Check Result", "type": "main", "index": 0 }]] },
+    "Is New Email?": { "main": [[{ "node": "AI Summary", "type": "main", "index": 0 }]] },
+    "AI Summary": { "main": [[{ "node": "Is Genuine Complaint?", "type": "main", "index": 0 }]] },
+    "Is Genuine Complaint?": {
+      "main": [
+        [{ "node": "Department Router", "type": "main", "index": 0 }],
+        [{ "node": "Mark Non-Complaint as Read", "type": "main", "index": 0 }]
+      ]
+    },
+    "Department Router": { "main": [[{ "node": "Log to Google Sheets", "type": "main", "index": 0 }]] },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          { "node": "Forward to Officer", "type": "main", "index": 0 },
+          { "node": "Acknowledge to Citizen", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Forward to Officer": { "main": [[{ "node": "Label — Forwarded for Action", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
