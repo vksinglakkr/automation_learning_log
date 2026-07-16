@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T&P Placement Registration Portal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <h2>T&P Placement Drive 2026</h2>
+    <p class="subtitle">Submit your profile info. The Administration will audit your GitHub portfolio and notify your eligibility via email.</p>
+    
+    <!-- Registration Form -->
+    <form id="registrationForm">
+      <div class="form-group">
+        <label>Full Student Name</label>
+        <input type="text" id="studentName" placeholder="e.g. Rahul Verma" required>
+      </div>
+
+      <div class="form-group">
+        <label>Contact Email Address</label>
+        <input type="email" id="studentEmail" placeholder="rahul@domain.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" id="studentPhone" placeholder="9876543210" required>
+      </div>
+
+      <div class="form-group">
+        <label>College/Institution Name</label>
+        <input type="text" id="studentCollege" placeholder="e.g. NIT Kurukshetra" required>
+      </div>
+
+      <div class="form-group">
+        <label>GitHub Username</label>
+        <input type="text" id="githubUser" placeholder="e.g. vksinglakkr" required>
+      </div>
+
+      <button type="submit" id="submitBtn">Register for Drive</button>
+    </form>
+
+    <!-- Success Screen (Initially Hidden) -->
+    <div class="success-box" id="successBox">
+      <div class="success-icon">✔️</div>
+      <h3>Registration Successful!</h3>
+      <p>Your details have been securely logged in the T&P queue. Our administration team will run the GitHub audit and send your interview gate-pass to your registered email.</p>
+    </div>
+
+    <div class="footer-timestamp">
+      Portal Security Checked on: <span id="timestamp"></span>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
