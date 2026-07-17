@@ -1,0 +1,202 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c318df49-68a0-42c9-9ec3-758e004d6ef1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [1696, 944]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Registrations",
+          "mode": "list",
+          "cachedResultName": "Registrations"
+        },
+        "options": {}
+      },
+      "id": "b95c03b0-d5ac-4035-8ad6-b0a73dfcaa67",
+      "name": "Fetch Registrations",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1920, 944],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// Gita Quiz DB Checker - Validate ALL Records + Aggregate\n// Mode: Run Once for All Items (no SplitInBatches needed)\n// IGM 2025 | NIC Kurukshetra\n// ============================================================\n\nconst VALID_DISTRICTS = [\n  'kurukshetra', 'kkr', 'ambala', 'karnal', 'panipat',\n  'yamunanagar', 'kaithal', 'pehowa', 'thanesar',\n  'rohtak', 'hisar', 'faridabad', 'gurugram', 'jind',\n  'bhiwani', 'sirsa', 'sonipat', 'rewari', 'mahendragarh'\n];\n\nconst DISTRICT_NORMALIZE = {\n  'kkr': 'Kurukshetra', 'kurukshetra': 'Kurukshetra',\n  'thanesar': 'Kurukshetra', 'pehowa': 'Kurukshetra',\n  'ambala': 'Ambala', 'karnal': 'Karnal',\n  'panipat': 'Panipat', 'yamunanagar': 'Yamunanagar',\n  'kaithal': 'Kaithal', 'rohtak': 'Rohtak',\n  'hisar': 'Hisar', 'faridabad': 'Faridabad',\n  'gurugram': 'Gurugram', 'jind': 'Jind',\n  'bhiwani': 'Bhiwani', 'sirsa': 'Sirsa',\n  'sonipat': 'Sonipat', 'rewari': 'Rewari',\n  'mahendragarh': 'Mahendragarh'\n};\n\nconst allItems = $input.all();\nconst cleanRows = [];\nconst errorRows = [];\nconst fingerprintsSeen = {};\nconst duplicates = [];\nconst issueMap = {};\n\nfor (const it of allItems) {\n  const item = it.json;\n  const issues = [];\n\n  // 1. Validate name\n  const rawName = (item.participant_name || '').toString().trim();\n  if (!rawName) {\n    issues.push('MISSING_NAME');\n  } else if (rawName.split(' ').filter(Boolean).length < 2) {\n    issues.push('INCOMPLETE_NAME');\n  }\n  const cleanName = rawName.toLowerCase().replace(/\\b\\w/g, c => c.toUpperCase());\n\n  // 2. Validate mobile\n  const rawMobile = (item.mobile_number || '').toString().trim();\n  const digitsOnly = rawMobile.replace(/[^0-9]/g, '');\n  if (!rawMobile) {\n    issues.push('MISSING_MOBILE');\n  } else if (/[a-zA-Z]/.test(rawMobile)) {\n    issues.push('INVALID_CHARS_IN_MOBILE');\n  } else if (digitsOnly.length !== 10) {\n    issues.push('MOBILE_NOT_10_DIGITS');\n  } else if (!/^[6-9]/.test(digitsOnly)) {\n    issues.push('MOBILE_INVALID_PREFIX');\n  }\n  const cleanMobile = digitsOnly;\n\n  // 3. Validate district\n  const rawDistrict = (item.district || '').toString().trim();\n  const districtKey = rawDistrict.toLowerCase();\n  if (!rawDistrict) {\n    issues.push('MISSING_DISTRICT');\n  } else if (!VALID_DISTRICTS.includes(districtKey)) {\n    issues.push('UNKNOWN_DISTRICT');\n  }\n  const cleanDistrict = DISTRICT_NORMALIZE[districtKey] || rawDistrict;\n\n  // 4. Fingerprint for duplicates\n  const fingerprint = `${cleanName.toLowerCase().replace(/\\s/g,'')}|${cleanMobile}`;\n  if (fingerprintsSeen[fingerprint]) {\n    issues.push('DUPLICATE_RECORD');\n    duplicates.push(rawName || 'Unknown');\n  } else {\n    fingerprintsSeen[fingerprint] = true;\n  }\n\n  // 5. Track issue types\n  issues.forEach(i => { issueMap[i] = (issueMap[i] || 0) + 1; });\n\n  const status = issues.length === 0 ? 'CLEAN' : 'INVALID';\n  const checkedAt = new Date().toISOString();\n\n  const record = {\n    original_name: rawName,\n    original_mobile: rawMobile,\n    original_district: rawDistrict,\n    clean_name: cleanName,\n    clean_mobile: cleanMobile,\n    clean_district: cleanDistrict,\n    status,\n    issues: issues.join(', ') || 'None',\n    issue_count: issues.length,\n    fingerprint,\n    checked_at: checkedAt\n  };\n\n  if (status === 'CLEAN') cleanRows.push(record);\n  else errorRows.push(record);\n}\n\n// Build summary\nconst totalRecords = allItems.length;\nconst cleanCount = cleanRows.length;\nconst invalidCount = errorRows.length;\nconst qualityPercent = totalRecords > 0 ? Math.round((cleanCount / totalRecords) * 100) : 0;\nconst issuesSummary = Object.entries(issueMap).map(([k,v]) => `${k}: ${v}`).join(', ') || 'No issues';\nconst checkedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });\n\n// Return one output item with everything\nreturn [\n  {\n    clean_rows: cleanRows,\n    error_rows: errorRows,\n    total_records: totalRecords,\n    clean_count: cleanCount,\n    invalid_count: invalidCount,\n    duplicate_count: duplicates.length,\n    duplicates_names: duplicates.join(', ') || 'None',\n    issues_breakdown: issuesSummary,\n    quality_percent: qualityPercent,\n    checked_at: checkedAt\n  }\n];"
+      },
+      "id": "ab6028e3-b16e-4245-b819-631bd97978a8",
+      "name": "Validate All Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2144, 944]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Write CLEAN rows to Clean_DB sheet\n// Returns one item per clean record for Google Sheets append\nconst data = $input.first().json;\nreturn data.clean_rows.map(row => ({\n  Name: row.clean_name,\n  Mobile: row.clean_mobile,\n  District: row.clean_district,\n  Fingerprint: row.fingerprint,\n  Checked_At: row.checked_at\n}));"
+      },
+      "id": "62dc2fb1-56b6-4350-a42d-29881fd743d7",
+      "name": "Prepare Clean Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2368, 752]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Write INVALID rows to Error_Report sheet\nconst data = $input.first().json;\nreturn data.error_rows.map(row => ({\n  Original_Name: row.original_name,\n  Original_Mobile: row.original_mobile,\n  Original_District: row.original_district,\n  Status: row.status,\n  Issues: row.issues,\n  Issue_Count: row.issue_count,\n  Checked_At: row.checked_at\n}));"
+      },
+      "id": "9f66bc3c-17f7-4dd8-a440-a11a568fb42c",
+      "name": "Prepare Error Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2368, 944]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clean_DB",
+          "mode": "list",
+          "cachedResultName": "Clean_DB"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "74e5ac2b-bdf4-4083-96ca-543972b482a7",
+      "name": "Append to Clean DB",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2592, 752],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": { "__rl": true, "value": "Error_Report", "mode": "name" },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "d4abe9f4-21a4-43ee-baeb-b8cd47a0845d",
+      "name": "Log to Error Report",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2592, 944],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Format Twilio WhatsApp message\n// Extract AI text from Groq HTTP Response\nconst stats = $('Validate All Records').first().json;\nconst raw = $input.item.json;\n\n// Groq HTTP response shape: { choices: [ { message: { content: '...' } } ] }\nlet aiReport = 'AI summary unavailable';\ntry {\n  if (raw.choices && raw.choices[0] && raw.choices[0].message) {\n    aiReport = raw.choices[0].message.content;\n  } else if (raw.text) {\n    aiReport = raw.text;\n  }\n} catch(e) {\n  aiReport = 'Could not parse AI response';\n}\n\nconst emoji = stats.quality_percent >= 90 ? '✅' : stats.quality_percent >= 70 ? '⚠️' : '🔴';\n\nconst message = `${emoji} *Gita Quiz DB Check Report*\n📅 ${stats.checked_at} IST\n\n📊 *Stats:*\n• Total: ${stats.total_records} records\n• Clean: ${stats.clean_count} (${stats.quality_percent}%)\n• Invalid: ${stats.invalid_count}\n• Duplicates: ${stats.duplicate_count}\n\n🤖 *AI Analysis:*\n${aiReport}\n\n_Powered by NIC Kurukshetra | IGM 2025_`;\n\nreturn { message };"
+      },
+      "id": "8adb32ba-a390-4457-a93d-9f7836179463",
+      "name": "Format Alert Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2592, 1136]
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "=REPLACE_WITH_YOUR_WHATSAPP_NUMBER",
+        "toWhatsapp": true,
+        "message": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "4c55aa77-88e5-42f4-b6c8-7918b9ee4570",
+      "name": "Twilio WhatsApp Alert",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [2816, 1136],
+      "credentials": {
+        "twilioApi": { "id": "8NOOttA5LuarQM1v", "name": "Twilio account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.3,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a data quality assistant for the International Gita Mahotsav 2025 Quiz Registration system, NIC Kurukshetra, Haryana. Generate concise official reports in both English and Hindi (Devanagari). Always end with a numbered action items list.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate a data quality report for Gita Quiz registrations.\\n\\nDatabase Check Summary:\\n- Total Records Checked: {{ $json.total_records }}\\n- Clean Records: {{ $json.clean_count }} ({{ $json.quality_percent }}%)\\n- Invalid Records: {{ $json.invalid_count }}\\n- Duplicate Records: {{ $json.duplicate_count }} ({{ $json.duplicates_names }})\\n- Issues Found: {{ $json.issues_breakdown }}\\n- Checked At: {{ $json.checked_at }} IST\\n\\nWrite the report in this exact format:\\n\\n**English Summary** (3-4 lines):\\n[write here]\\n\\n**हिंदी सारांश** (3-4 lines in Devanagari):\\n[write here]\\n\\n**Action Items**:\\n1. [first action]\\n2. [second action]\\n3. [third action]\\n\\nKeep the total response under 200 words. Be official and concise.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2320, 1152],
+      "id": "b9cc54c7-585a-4b0e-86be-1f409c8e5154",
+      "name": "Groq (Llama 3)",
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Fetch Registrations", "type": "main", "index": 0 }]] },
+    "Fetch Registrations": { "main": [[{ "node": "Validate All Records", "type": "main", "index": 0 }]] },
+    "Validate All Records": {
+      "main": [
+        [
+          { "node": "Prepare Clean Rows", "type": "main", "index": 0 },
+          { "node": "Prepare Error Rows", "type": "main", "index": 0 },
+          { "node": "Groq (Llama 3)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Prepare Clean Rows": { "main": [[{ "node": "Append to Clean DB", "type": "main", "index": 0 }]] },
+    "Prepare Error Rows": { "main": [[{ "node": "Log to Error Report", "type": "main", "index": 0 }]] },
+    "Format Alert Message": { "main": [[{ "node": "Twilio WhatsApp Alert", "type": "main", "index": 0 }]] },
+    "Groq (Llama 3)": { "main": [[{ "node": "Format Alert Message", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
