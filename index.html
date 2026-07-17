@@ -313,7 +313,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="15">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="17">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -485,14 +485,16 @@ const PROJECTS = [
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3b-multi-website-monitoring"
   },
   {
-    id:8, num:"3c", title:"Database Health Checker", level:"Advanced", time:"40 min",
+    id:8, num:"3c", title:"Database Health Checker — Registration Data Quality Auditor", level:"Advanced", time:"45 min",
     category:"Database",
-    flow:[["Scheduler","trigger"],["Database Query","logic"],["Code","logic"],["Notify","service"]],
-    desc:"Same monitoring pattern applied to a database connection — checking query latency and connectivity rather than an HTTP endpoint.",
-    concepts:["Database node credentials","Query-based health checks","Latency thresholds"],
-    prereqs:["Database connection string","Completed projects 06–07"],
-    errors:["Credential misconfiguration blocking connection","Query timing out under load, flagged as false failure"],
-    tags:["database","monitoring","advanced"],
+    flow:[["Manual Trigger","trigger"],["Fetch Registrations","service"],["Validate All Records","logic"],["Groq (Llama 3)","ai"],["Twilio WhatsApp Alert","service"]],
+    desc:"Validates the data quality of a Google Sheet acting as a registration database (built for the Gita Quiz, IGM 2025). Run on demand, it checks every record's name/mobile/district formatting, flags duplicates by a name+mobile fingerprint, splits records into Clean vs. Invalid sheets, and sends a Groq-generated bilingual (English + Hindi) quality report over WhatsApp.",
+    concepts:["Manual Trigger for on-demand admin checks, not scheduled","Run-once-for-all-items validation — one Code node execution aggregates every row into a single summary","Fingerprint-based duplicate detection (name+mobile composite key)","Field normalization: district aliases, name capitalization, mobile digit cleaning","Three-way fan-out from one validation step: clean rows, error rows, and an AI summary in parallel","AI report with a fixed English/Hindi/Action-Items structure for predictable WhatsApp formatting"],
+    prereqs:["Google Sheet with Registrations, Clean_DB, and Error_Report tabs already set up with matching headers","Groq API credential","Twilio credential"],
+    errors:["Append to Clean DB / Log to Error Report use auto-map-by-column-name — target tabs must have headers exactly matching the Code nodes' output field names or rows won't map correctly","WhatsApp alert recipient is a single hardcoded number by design (admin-only alert) — needs updating to whoever should receive reports","District validation list is specific to Haryana — needs updating for other states/events"],
+    tags:["database","monitoring","data-quality","validation","ai","groq","twilio","whatsapp","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/3c-database-health-checker/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/3c-database-health-checker/README.md",
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3c-database-health-checker"
   },
   {
@@ -520,7 +522,7 @@ const PROJECTS = [
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/5-gita-wisdom-ai-qa"
   },
   {
-    id:11, num:"6", title:"Complaint System — Aadhar, Ration, PPP, Pension, Certificates", level:"Advanced", time:"50 min",
+    id:11, num:"6a", title:"Complaint System — Gmail Inbox Router", level:"Advanced", time:"50 min",
     category:"Business",
     flow:[["Gmail Trigger","trigger"],["Check Already Processed","service"],["AI Summary","ai"],["Department Router","logic"],["Log to Google Sheets","service"],["Forward + Acknowledge","service"]],
     desc:"Citizens email complaints directly (Aadhar, Ration, PPP, Pension, Revenue, Credit, etc.) to a monitored inbox. A Gmail Trigger polls every minute; each email is deduplicated against the log, AI-classified as a genuine complaint or not, routed to the right department by keyword rules, logged to Sheets with a reference number, and answered with two parallel emails — an acknowledgement to the citizen and a forward-for-action to the officer.",
@@ -528,9 +530,35 @@ const PROJECTS = [
     prereqs:["Gmail account receiving citizen complaint emails","Groq API credential","Google Sheets credential with a Complaints tab","Gmail labels created for post-processing"],
     errors:["'Is New Email?' condition uses OR instead of AND across (not duplicate) / (subject contains 'Complaint') / (snippet contains 'Complaint') — an already-processed email whose subject happens to contain 'Complaint' can still pass through and be reprocessed, since OR only needs one true condition","Forward to Officer email references '.subject' (lowercase) instead of '.Subject' (capital) in one row — likely renders blank due to case-sensitive field mismatch","The 'Complaint' keyword check in the IF node is English-only and narrower than the Gmail Trigger's broad multilingual search — many trigger-matched emails (e.g. subject 'Pension Issue') won't contain the literal word 'Complaint'"],
     tags:["complaint","ai","government","google","gmail","advanced"],
-    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6-complaint-system/workflow.json",
-    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6-complaint-system/README.md",
-    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6-complaint-system"
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6a-complaint-system-gmail-inbox/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6a-complaint-system-gmail-inbox/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6a-complaint-system-gmail-inbox"
+  },
+  {
+    id:16, num:"6b", title:"Complaint System — Web Form", level:"Advanced", time:"55 min",
+    category:"Business",
+    flow:[["Form Trigger","trigger"],["AI Improve Complaint","ai"],["Process & Route","logic"],["Log to Google Sheets","service"],["Email + WhatsApp (Citizen)","service"],["Email + WhatsApp (Officer)","service"]],
+    desc:"Citizens submit complaints through a public web form (Pension, Aadhaar, PPP, Ration, Revenue, CRED, Other), with an AI-assist option to formalize their complaint text before submitting. Groq classifies department/priority and rewrites the text; the workflow logs it to Sheets and sends both email and WhatsApp notifications to the citizen and the routed officer in parallel.",
+    concepts:["AI-assisted text improvement before submission, triggered from the form itself","One AI call returning both rewritten text and structured metadata (department/priority/summary) in a labeled format","Two independent notification channels per recipient — email and WhatsApp, each in their own sequential branch","Reference number generation from citizen name + timestamp"],
+    prereqs:["Groq API credential","Google Sheets credential with a Complaints tab","Gmail credential","Twilio credential (WhatsApp) with each officer/citizen number joined if in sandbox mode"],
+    errors:["Original workflow hardcoded a single WhatsApp number for every department's officer alert — fixed in the sanitized version to use the per-department field that was already being computed but ignored","Twilio Account SID needs to be filled into two separate node URLs — easy to update one and miss the other","AI Improve Complaint step depends on a specific labeled output format (DEPARTMENT/PRIORITY/SUMMARY) — a model that doesn't follow the format exactly will fall back to 'OTHERS'/'Medium' defaults"],
+    tags:["complaint","ai","groq","government","google","gmail","twilio","whatsapp","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6b-complaint-system-web-form/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6b-complaint-system-web-form/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6b-complaint-system-web-form"
+  },
+  {
+    id:17, num:"6c", title:"Complaint System — Custom HTML + Webhook", level:"Advanced", time:"55 min",
+    category:"Business",
+    flow:[["Receive Complaint (Webhook)","trigger"],["Map & Prepare Data","logic"],["AI Improve & Classify","ai"],["Extract & Route","logic"],["Log + Respond","service"],["Email + WhatsApp (both)","service"]],
+    desc:"Third complaint variant, built around two raw Webhook endpoints for a fully custom HTML page rather than n8n's built-in form. One endpoint powers a lightweight 'AI Assist' preview button (rewrite only, nothing saved); the other handles final submission — classifying, routing, logging, and notifying citizen and officer by both email and WhatsApp in parallel.",
+    concepts:["Two-webhook pattern: a cheap preview endpoint separate from the full submission endpoint","Deferred re-classification — the submission endpoint always re-runs AI on whichever text (raw or already-improved) the citizen ends up submitting","Immediate webhook response in parallel with logging, so the citizen isn't kept waiting on email/WhatsApp sends","Explicit node-reference syntax ($('NodeName').item.json) for clearer multi-hop data flow"],
+    prereqs:["Groq API credential","Google Sheets credential with a Complaints Log tab","Gmail credential","Twilio credential (WhatsApp)","A custom HTML page calling both webhook endpoints"],
+    errors:["No per-department WhatsApp routing exists — every officer alert goes to one hardcoded number regardless of department, unlike 6b which at least computes a per-department value","WhatsApp nodes' credential is named 'Cloudinary' — worth verifying in n8n this is genuinely a relabeled Twilio credential and not the wrong one attached","Original export's pinData contained a full real test submission (email, phone, IP, self-hosted domain) — stripped entirely in the sanitized version, but a reminder to check pinData before publishing any future export"],
+    tags:["complaint","ai","groq","government","google","gmail","twilio","whatsapp","webhook","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6c-complaint-system-custom-html/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6c-complaint-system-custom-html/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6c-complaint-system-custom-html"
   },
   {
     id:12, num:"7", title:"WhatsApp VIP Alert", level:"Advanced", time:"35 min",
