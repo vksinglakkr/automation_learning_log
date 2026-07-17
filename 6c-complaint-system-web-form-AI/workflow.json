@@ -1,0 +1,275 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "citizen-complaint-kkr",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "7bef6990-871b-4913-a621-a79955514151",
+      "name": "Receive Complaint (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-960, 160],
+      "webhookId": "citizen-complaint-kkr"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-improve-only",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "6f21e8fc-27a8-4352-a056-1bb417b9da75",
+      "name": "AI Preview Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-960, 368],
+      "webhookId": "ai-improve-only"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 300,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a government complaint assistant. Rewrite this complaint formally in the SAME language (Hindi/English/Punjabi). Start with Respected Sir/Madam. Keep all facts. Max 100 words. Return ONLY the improved text, nothing else.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Name: {{ $json.body.name }}\\nAddress: {{ $json.body.address }}\\nCategory: {{ $json.body.category }}\\nLanguage: {{ $json.body.language }}\\nComplaint: {{ $json.body.complaint }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "4427e1c7-6b64-4a5b-9b99-7cc5fcbc9383",
+      "name": "AI Preview (for HTML form button)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-720, 368],
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ improved: $json.choices[0].message.content }) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "e502eb45-438a-432e-9472-2745d80fccba",
+      "name": "Return AI Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-480, 368]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.officerEmail }}",
+        "subject": "=[{{ $json.priority }}] {{ $json.dept }} Complaint {{ $json.refNumber }} from {{ $json.name }}",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto\"><div style=\"background:#b71c1c;padding:20px;border-radius:8px 8px 0 0\"><h2 style=\"color:white;margin:0\">District Administration Kurukshetra</h2><p style=\"color:#ffcdd2;margin:4px 0 0\">Complaint — {{ $json.officerLabel }}</p></div><div style=\"background:#fff8e1;padding:14px\"><strong style=\"color:#e65100\">ACTION REQUIRED — {{ $json.priority }} Priority | {{ $json.dept }}</strong></div><div style=\"background:#fff;padding:24px;border:1px solid #e0e0e0\"><table style=\"width:100%;font-size:14px;border-collapse:collapse;margin-bottom:20px\"><tr style=\"background:#f5f5f5\"><td style=\"padding:8px 12px;font-weight:bold;width:130px\">Reference</td><td style=\"padding:8px 12px;color:#0d1b4b;font-weight:bold\">{{ $json.refNumber }}</td></tr><tr><td style=\"padding:8px 12px;font-weight:bold\">Received</td><td style=\"padding:8px 12px\">{{ $json.submittedAt }}</td></tr><tr style=\"background:#f5f5f5\"><td style=\"padding:8px 12px;font-weight:bold\">Citizen</td><td style=\"padding:8px 12px\">{{ $json.name }}</td></tr><tr><td style=\"padding:8px 12px;font-weight:bold\">Phone</td><td style=\"padding:8px 12px\">{{ $json.phone }}</td></tr><tr style=\"background:#f5f5f5\"><td style=\"padding:8px 12px;font-weight:bold\">Email</td><td style=\"padding:8px 12px\">{{ $json.email }}</td></tr><tr><td style=\"padding:8px 12px;font-weight:bold\">Address</td><td style=\"padding:8px 12px\">{{ $json.address }}</td></tr><tr style=\"background:#f5f5f5\"><td style=\"padding:8px 12px;font-weight:bold\">Category</td><td style=\"padding:8px 12px\">{{ $json.category }}</td></tr><tr><td style=\"padding:8px 12px;font-weight:bold\">Priority</td><td style=\"padding:8px 12px\">{{ $json.priority }}</td></tr></table><div style=\"background:#e8f5e9;border-left:4px solid #2e7d32;padding:16px;margin-bottom:16px;border-radius:0 8px 8px 0\"><strong style=\"color:#1b5e20\">✨ AI Improved Complaint:</strong><br/><br/><p style=\"font-size:13px;color:#333;white-space:pre-wrap\">{{ $json.improvedText }}</p></div><div style=\"background:#fafafa;border:1px solid #e0e0e0;padding:16px;border-radius:8px\"><strong>Original (as submitted):</strong><br/><br/><p style=\"font-size:13px;color:#777;white-space:pre-wrap\">{{ $json.complaintText }}</p></div></div><div style=\"background:#f5f5f5;padding:12px;text-align:center;border-radius:0 0 8px 8px\"><p style=\"color:#999;font-size:12px;margin:0\">Automated Complaint System | DC Kurukshetra</p></div></div>",
+        "options": {
+          "replyTo": "={{ $json.email }}"
+        }
+      },
+      "id": "6e6b9f3d-2f39-4fdf-b847-959c93d04ca2",
+      "name": "Email to Officer",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [240, 240],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "From", "value": "whatsapp:+14155238886" },
+            { "name": "To", "value": "whatsapp:REPLACE_WITH_OFFICER_WHATSAPP" },
+            {
+              "name": "Body",
+              "value": "=🚨 *New Complaint*\n*{{ $json.priority }} — {{ $json.dept }}*\n\n📋 *Ref:* {{ $json.refNumber }}\n👤 {{ $json.name }}\n📞 {{ $json.phone }}\n🏛️ {{ $json.category }}\n🏢 {{ $json.officerLabel }}\n📍 {{ $json.address }}\n\n📝 {{ $json.summary }}\n\n🕐 {{ $json.submittedAt }}\n_DC Kurukshetra_"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc580c3d-45f5-4061-9e57-4768aacd6515",
+      "name": "WhatsApp Alert to Officer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 240],
+      "credentials": {
+        "httpBasicAuth": { "id": "UiqDMRxVPyxY8srz", "name": "Cloudinary" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "From", "value": "whatsapp:+14155238886" },
+            { "name": "To", "value": "={{ $json.citizenWhatsApp }}" },
+            {
+              "name": "Body",
+              "value": "=✅ *Complaint Registered*\n\nNamaste *{{ $json.name }}*,\n\nYour complaint is registered with DC Kurukshetra.\n\n📋 *Ref:* {{ $json.refNumber }}\n🏛️ *Category:* {{ $json.category }}\n👨‍💼 *Forwarded to:* {{ $json.officerLabel }}\n⚡ *Priority:* {{ $json.priority }}\n🕐 *Time:* {{ $json.submittedAt }}\n\nKeep this reference for follow-up.\n\nजय हिन्द 🇮🇳\n_DC Kurukshetra_"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e0724941-affe-4370-9d35-8c8070b0f195",
+      "name": "WhatsApp to Citizen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 80],
+      "credentials": {
+        "httpBasicAuth": { "id": "UiqDMRxVPyxY8srz", "name": "Cloudinary" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=✅ Complaint Registered {{ $json.refNumber }} | DC Kurukshetra",
+        "message": "=<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto\"><div style=\"background:#0d1b4b;padding:20px;border-radius:8px 8px 0 0\"><h2 style=\"color:white;margin:0\">District Administration Kurukshetra</h2><p style=\"color:#c5cae9;margin:4px 0 0\">नागरिक शिकायत पोर्टल</p></div><div style=\"background:#e8f5e9;padding:14px;border:1px solid #a5d6a7\"><strong style=\"color:#2e7d32\">✅ Complaint Registered Successfully!</strong></div><div style=\"background:#fff;padding:24px;border:1px solid #e0e0e0\"><p>Dear <strong>{{ $json.name }}</strong>,</p><p>Your complaint has been forwarded to <strong>{{ $json.officerLabel }}</strong>.</p><table style=\"width:100%;font-size:14px;border-collapse:collapse;margin:16px 0\"><tr style=\"background:#e8eaf6\"><td style=\"padding:10px;font-weight:bold\">Reference No.</td><td style=\"padding:10px;color:#0d1b4b;font-weight:bold\">{{ $json.refNumber }}</td></tr><tr><td style=\"padding:10px;font-weight:bold\">Category</td><td style=\"padding:10px\">{{ $json.category }}</td></tr><tr style=\"background:#f5f5f5\"><td style=\"padding:10px;font-weight:bold\">Forwarded To</td><td style=\"padding:10px\">{{ $json.officerLabel }}</td></tr><tr><td style=\"padding:10px;font-weight:bold\">Priority</td><td style=\"padding:10px\">{{ $json.priority }}</td></tr><tr style=\"background:#f5f5f5\"><td style=\"padding:10px;font-weight:bold\">Date & Time</td><td style=\"padding:10px\">{{ $json.submittedAt }}</td></tr></table><p style=\"color:#666;font-size:12px\">WhatsApp confirmation also sent to {{ $json.phone }}. Keep Reference Number for follow-up.</p><p>Jai Hind | जय हिन्द 🇮🇳</p></div><div style=\"background:#f5f5f5;padding:12px;text-align:center;border-radius:0 0 8px 8px\"><p style=\"color:#999;font-size:12px;margin:0\">District Administration Kurukshetra, Haryana</p></div></div>",
+        "options": {}
+      },
+      "id": "d90fab56-f0bb-4b72-ac29-52584e3d9d05",
+      "name": "Email to Citizen",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [240, 80],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Complaints Log", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.submittedAt }}",
+            "Ref Number": "={{ $json.refNumber }}",
+            "Name": "={{ $json.name }}",
+            "Phone": "={{ $json.phone }}",
+            "Email": "={{ $json.email }}",
+            "Address": "={{ $json.address }}",
+            "Category": "={{ $json.category }}",
+            "Department": "={{ $json.dept }}",
+            "Priority": "={{ $json.priority }}",
+            "Summary": "={{ $json.summary }}",
+            "Original Text": "={{ $json.complaintText }}",
+            "Improved Text": "={{ $json.improvedText }}",
+            "Officer": "={{ $json.officerLabel }}",
+            "Status": "=Forwarded"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b067aa41-7ac9-45b9-806f-221b66af3151",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [0, 160],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, refNumber: $json.refNumber, department: $json.dept, officer: $json.officerLabel }) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "22f8ea2a-3db6-4f6f-9f0c-5c0e71fa6d5d",
+      "name": "Respond to HTML Form",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const aiText = $input.item.json.choices[0].message.content;\nconst prev   = $('Map & Prepare Data').item.json;\n\nconst deptMatch     = aiText.match(/DEPARTMENT:\\s*(\\w+)/i);\nconst priorityMatch = aiText.match(/PRIORITY:\\s*(\\w+)/i);\nconst summaryMatch  = aiText.match(/SUMMARY:\\s*(.+)/i);\n\nconst dept     = deptMatch     ? deptMatch[1].toUpperCase().trim()  : 'OTHERS';\nconst priority = priorityMatch ? priorityMatch[1].trim()            : 'Medium';\nconst summary  = summaryMatch  ? summaryMatch[1].trim()             : prev.complaintText.slice(0, 100);\n\nconst improvedText = aiText\n  .replace(/DEPARTMENT:.*$/mi, '')\n  .replace(/PRIORITY:.*$/mi,   '')\n  .replace(/SUMMARY:.*$/mi,    '')\n  .trim();\n\nconst routingMap = {\n  PENSION:  { email: 'REPLACE_WITH_PENSION_OFFICER_EMAIL@example.gov.in', label: 'DSWO (Pension)'  },\n  AADHAAR:  { email: 'REPLACE_WITH_AADHAAR_OFFICER_EMAIL@example.gov.in', label: 'ADC (Aadhaar)'   },\n  PPP:      { email: 'REPLACE_WITH_PPP_OFFICER_EMAIL@example.gov.in', label: 'ADC (PPP)'       },\n  RATION:   { email: 'REPLACE_WITH_RATION_OFFICER_EMAIL@example.gov.in', label: 'DFSC (Ration)'   },\n  REVENUE:  { email: 'REPLACE_WITH_REVENUE_OFFICER_EMAIL@example.gov.in', label: 'DRO (Revenue)'   },\n  CRED:     { email: 'REPLACE_WITH_CRED_OFFICER_EMAIL@example.gov.in', label: 'ADC (CRED)'      },\n  OTHERS:   { email: 'REPLACE_WITH_DEFAULT_OFFICER_EMAIL@example.gov.in', label: 'DC Office'       }\n};\n\nconst route = routingMap[dept] || routingMap.OTHERS;\n\nreturn {\n  json: {\n    ...prev,\n    improvedText, dept, priority, summary,\n    officerEmail: route.email,\n    officerLabel: route.label\n  }\n};"
+      },
+      "id": "a6863bbe-1ce8-47b7-904a-78a4f8bd6327",
+      "name": "Extract & Route",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-240, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"max_tokens\": 600,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a government complaint assistant for District Administration Kurukshetra. Rewrite the complaint formally in the SAME language. Start with Respected Sir/Madam. Keep all facts. Max 150 words.\\n\\nThen add on new lines:\\nDEPARTMENT: [PENSION/AADHAAR/PPP/RATION/REVENUE/CRED/OTHERS]\\nPRIORITY: [High/Medium/Low]\\nSUMMARY: [one line summary]\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Name: {{ $json.name }}\\nAddress: {{ $json.address }}\\nCategory: {{ $json.category }}\\nLanguage: {{ $json.language }}\\nComplaint: {{ $json.useText }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "0e80ea84-dcbd-47ee-b55e-d1ef5454d591",
+      "name": "AI Improve & Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 160],
+      "credentials": {
+        "groqApi": { "id": "SVypylwZhqG2a8gE", "name": "Groq account" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const b = $input.item.json.body;\n\nconst name          = b.name || '';\nconst phone         = b.phone || '';\nconst email         = b.email || '';\nconst address       = b.address || '';\nconst category      = b.category || 'Others';\nconst language      = b.language || 'English';\nconst complaintText = b.complaint_text || b.complaint || '';\nconst aiImproved    = b.ai_improved_text || '';\nconst submittedAt   = b.submitted_at || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });\n\nlet phone_clean = phone.toString().replace(/[\\s\\-()]/g, '');\nif (!phone_clean.startsWith('+')) phone_clean = '+91' + phone_clean;\n\nconst refNumber = '#KKR' + Date.now().toString().slice(-6);\n\nreturn {\n  json: {\n    name, phone, phone_clean, email, address,\n    category, language, complaintText, aiImproved,\n    submittedAt, refNumber,\n    citizenWhatsApp: 'whatsapp:' + phone_clean,\n    useText: aiImproved !== '' ? aiImproved : complaintText\n  }\n};"
+      },
+      "id": "cfc6de19-a852-47c6-a805-001afd54820c",
+      "name": "Map & Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-720, 160]
+    }
+  ],
+  "connections": {
+    "Receive Complaint (Webhook)": { "main": [[{ "node": "Map & Prepare Data", "type": "main", "index": 0 }]] },
+    "AI Preview Webhook": { "main": [[{ "node": "AI Preview (for HTML form button)", "type": "main", "index": 0 }]] },
+    "AI Preview (for HTML form button)": { "main": [[{ "node": "Return AI Preview", "type": "main", "index": 0 }]] },
+    "Email to Officer": { "main": [[{ "node": "WhatsApp Alert to Officer", "type": "main", "index": 0 }]] },
+    "Email to Citizen": { "main": [[{ "node": "WhatsApp to Citizen", "type": "main", "index": 0 }]] },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          { "node": "Email to Officer", "type": "main", "index": 0 },
+          { "node": "Email to Citizen", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract & Route": {
+      "main": [
+        [
+          { "node": "Log to Google Sheets", "type": "main", "index": 0 },
+          { "node": "Respond to HTML Form", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "AI Improve & Classify": { "main": [[{ "node": "Extract & Route", "type": "main", "index": 0 }]] },
+    "Map & Prepare Data": { "main": [[{ "node": "AI Improve & Classify", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
