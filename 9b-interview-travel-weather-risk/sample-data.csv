@@ -1,0 +1,4 @@
+,Student_Name,Student_Email,Destination_City,Interview_Date,Latitude,Longitude,Company_Name,Company_HR_Email,Hotel_Name,Hotel_Address,Interview_Chances,Interview_Status,Travelling_Pass,Hotel_Accommodation
+,Amit Kumar,amit.k@student.edu,Phoenix,2026-07-20,33.4484,-112.074,TechCorp Inc.,hr@techcorp.com,Desert Inn,123 Cactus Way,0,Pending,Pending,Pending
+,Priya Sharma,priya.s@student.edu,Bangalore,2026-07-21,12.9716,77.5946,Innovate Ltd.,careers@innovate.com,Tech Hub Hotel,456 Silicon Blvd,0,Pending,Pending,Pending
+,Rahul Singh,rahul.s@student.edu,London,2026-07-22,51.5074,-0.1278,Global Finance,hiring@globalfin.co.uk,The Thames Hotel,789 River Road,0,Pending,Pending,Pending
