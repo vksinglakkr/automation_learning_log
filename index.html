@@ -21,6 +21,7 @@
   --gold:#E0A458;
   --pink:#FF7AAE;
   --cyan:#38BDF8;
+  --coral:#FF8B6B;
   --text:#E7EAF0;
   --muted:#7C879C;
   --radius:14px;
@@ -313,7 +314,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="18">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="19">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -613,6 +614,19 @@ const PROJECTS = [
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9b-interview-travel-weather-risk"
   },
   {
+    id:19, num:"10", title:"Bulk Email Broadcast", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Manual Trigger","trigger"],["Get 100 Users","service"],["Send Email (Gmail)","service"]],
+    desc:"The simplest possible bulk-send pattern: read every row from a Sheet, and send one personalized Gmail message per row, triggered manually whenever needed. No scheduling, no filtering — run it and everyone in the sheet gets an email.",
+    concepts:["One node automatically running once per item — a single Gmail node sends N separate emails with no loop or batching node needed for a small list","Personalizing each send via expressions pulling that row's own Name/Email","Manual Trigger for a controlled, on-demand broadcast rather than a schedule"],
+    prereqs:["Gmail credential","Google Sheets credential with Name + Email columns"],
+    errors:["No rate limiting — sending 100+ emails in one run risks hitting Gmail's sending caps partway through with no way to tell who was missed","No 'already sent' tracking — running it twice emails everyone twice","Node name 'Get 100 Users' doesn't actually cap the read at 100 rows — no limit is set, so it reads however many rows exist"],
+    tags:["gmail","bulk","broadcast","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/10-bulk-email-broadcast/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/10-bulk-email-broadcast/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/10-bulk-email-broadcast"
+  },
+  {
     id:15, num:"3d", title:"Website Up/Down Monitor — AI Alerts (Groq)", level:"Advanced", time:"45 min",
     category:"Monitoring",
     flow:[["Every 5 Minutes","trigger"],["Check Website","logic"],["Compare With Previous","logic"],["Log Check to Sheet","service"],["Groq Alert","ai"],["Send Email","service"]],
@@ -750,7 +764,8 @@ function renderProjects(){
     6: {color:"var(--green)",  icon:"📋", label:"Complaint"},
     7: {color:"var(--pink)",   icon:"📱", label:"WhatsApp"},
     8: {color:"var(--gold)",   icon:"🏛️", label:"Hackathon"},
-    9: {color:"var(--cyan)",   icon:"🌐", label:"HTTP Series"}
+    9: {color:"var(--cyan)",   icon:"🌐", label:"HTTP Series"},
+    10: {color:"var(--coral)", icon:"📢", label:"Bulk Broadcast"}
   };
   const getGroup = (num) => parseInt(num, 10) || 0;
 
