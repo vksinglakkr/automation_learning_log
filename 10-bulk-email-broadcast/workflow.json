@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Good Morning from Us!",
+        "message": "=Hi {{ $json.Name }},<br><br>Good Morning! Wishing you a productive and peaceful day ahead. 🌞<br><br>Regards,<br>Team",
+        "options": {}
+      },
+      "id": "a4ebe7f0-bc71-453e-8647-bce8010881c3",
+      "name": "Send Email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [320, -80],
+      "credentials": {
+        "gmailOAuth2": { "id": "ip49xU63tpHqFlOg", "name": "Gmail account" }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "YourSheetName"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet4",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "9a302e22-7b6c-4099-9b11-17567f7f44fd",
+      "name": "Get 100 Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [96, -80],
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "zqCFkP1mXpyrkeQ2", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "5820babd-0fa7-4140-a2ba-aa73007b076c",
+      "name": "Manual Trigger (Run when needed)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-128, -80]
+    }
+  ],
+  "connections": {
+    "Get 100 Users": {
+      "main": [[{ "node": "Send Email (Gmail)", "type": "main", "index": 0 }]]
+    },
+    "Manual Trigger (Run when needed)": {
+      "main": [[{ "node": "Get 100 Users", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {}
+}
