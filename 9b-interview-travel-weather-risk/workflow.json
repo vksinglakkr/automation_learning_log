@@ -1,0 +1,872 @@
+{
+  "name": "Day 2 lab",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "ef3e18e4-d801-4e2e-9e97-92b2fb906057",
+      "name": "Admin Manual Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "day 2 lab",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "4394f4be-12be-4891-95a3-35880e951892",
+      "name": "Read Batch Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -1136,
+        320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bP76RfCgr94tagd2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.Interview_Chances }}",
+              "value2": 3
+            }
+          ]
+        }
+      },
+      "id": "b185ef7a-924e-497e-a63a-5bb222dc21cb",
+      "name": "Check Chances < 3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "longitude",
+              "value": "={{ $json.Longitude }}"
+            },
+            {
+              "name": "latitude",
+              "value": "={{ $json.Latitude }}"
+            },
+            {
+              "name": "daily",
+              "value": "temperature_2m_max"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $json.Interview_Date }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $json.Interview_Date }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "75991b2d-6a60-465d-a7ba-923f933b69b5",
+      "name": "Live Forecaster",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -704,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.daily.temperature_2m_max[0] }}",
+              "operation": "larger",
+              "value2": 40
+            }
+          ]
+        }
+      },
+      "id": "743245fa-1856-49fb-84c1-02c62d310db6",
+      "name": "Max Temp > 40°C",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "day 2 lab",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Interview_Chances": "={{ $('Check Chances < 3').item.json.Interview_Chances + 1 }}",
+            "Interview_Status": "Deferred - Weather Risk",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "Student_Email"
+          ],
+          "schema": [
+            {
+              "id": "Student_Name",
+              "displayName": "Student_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Student_Email",
+              "displayName": "Student_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Destination_City",
+              "displayName": "Destination_City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview_Date",
+              "displayName": "Interview_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Latitude",
+              "displayName": "Latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Longitude",
+              "displayName": "Longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_Name",
+              "displayName": "Company_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_HR_Email",
+              "displayName": "Company_HR_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hotel_Name",
+              "displayName": "Hotel_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hotel_Address",
+              "displayName": "Hotel_Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview_Chances",
+              "displayName": "Interview_Chances",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interview_Status",
+              "displayName": "Interview_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Travelling_Pass",
+              "displayName": "Travelling_Pass",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hotel_Accommodation",
+              "displayName": "Hotel_Accommodation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "latitude",
+              "displayName": "latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "longitude",
+              "displayName": "longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "generationtime_ms",
+              "displayName": "generationtime_ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "utc_offset_seconds",
+              "displayName": "utc_offset_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timezone",
+              "displayName": "timezone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timezone_abbreviation",
+              "displayName": "timezone_abbreviation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "elevation",
+              "displayName": "elevation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "daily_units",
+              "displayName": "daily_units",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "daily",
+              "displayName": "daily",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c014fbd0-9c05-483b-afb2-0c628f9f0a8d",
+      "name": "Update: High Risk",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -240,
+        112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bP76RfCgr94tagd2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "day 2 lab",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Interview_Chances": "={{ $('Check Chances < 3').item.json.Interview_Chances + 1 }}",
+            "Interview_Status": "Cleared",
+            "Travelling_Pass": "Issued",
+            "Hotel_Accommodation": "Confirmed",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "Student_Email"
+          ],
+          "schema": [
+            {
+              "id": "Student_Name",
+              "displayName": "Student_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Student_Email",
+              "displayName": "Student_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Destination_City",
+              "displayName": "Destination_City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview_Date",
+              "displayName": "Interview_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Latitude",
+              "displayName": "Latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Longitude",
+              "displayName": "Longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_Name",
+              "displayName": "Company_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_HR_Email",
+              "displayName": "Company_HR_Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hotel_Name",
+              "displayName": "Hotel_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hotel_Address",
+              "displayName": "Hotel_Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Interview_Chances",
+              "displayName": "Interview_Chances",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Interview_Status",
+              "displayName": "Interview_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Travelling_Pass",
+              "displayName": "Travelling_Pass",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hotel_Accommodation",
+              "displayName": "Hotel_Accommodation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "latitude",
+              "displayName": "latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "longitude",
+              "displayName": "longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "generationtime_ms",
+              "displayName": "generationtime_ms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "utc_offset_seconds",
+              "displayName": "utc_offset_seconds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timezone",
+              "displayName": "timezone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timezone_abbreviation",
+              "displayName": "timezone_abbreviation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "elevation",
+              "displayName": "elevation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "daily_units",
+              "displayName": "daily_units",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "daily",
+              "displayName": "daily",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d78945be-055d-4265-a2ce-791d5dcbeaad",
+      "name": "Update: Success",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -240,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bP76RfCgr94tagd2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Check Chances < 3').item.json.Student_Email }}",
+        "subject": "URGENT: Interview Deferred Due to Extreme Weather",
+        "message": "=Dear {{ $('Check Chances < 3').item.json.Student_Name }},\n\nDue to severe weather warnings in {{ $('Check Chances < 3').item.json.Destination_City }} (Temperatures exceeding 40°C), your travel and interview scheduled for {{ $('Check Chances < 3').item.json.Interview_Date }} have been deferred for your safety.\n\nWe are actively coordinating with {{ $('Check Chances < 3').item.json.Company_Name }} to reschedule.\n\nStay safe,\nT&P Cell",
+        "options": {}
+      },
+      "id": "c3f3fcbd-02fb-47ac-aaaf-cc1fbb57ddec",
+      "name": "Gmail: Student Risk",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "8ca3e35e-1750-41ae-b15b-bdb00df275eb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xpq6OkyUqKGCU2WY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Check Chances < 3').item.json.Company_HR_Email }}",
+        "subject": "Notice: Candidate Reschedule Request - Extreme Weather",
+        "message": "=Dear HR Team at {{ $('Check Chances < 3').item.json.Company_Name }},\n\nWe are writing to inform you that our candidate, {{ $('Check Chances < 3').item.json.Student_Name }}, will not be able to travel to {{ $('Check Chances < 3').item.json.Destination_City }} on {{ $('Check Chances < 3').item.json.Interview_Date }} due to projected extreme temperatures posing a health risk.\n\nWe kindly request a rescheduled interview slot. Please let us know available dates.\n\nRegards,\nT&P Cell",
+        "options": {}
+      },
+      "id": "61c541a2-5a75-40c0-8369-0b8448298104",
+      "name": "Gmail: HR Risk",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "2084d42c-dded-4e77-977b-0579da260c4e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xpq6OkyUqKGCU2WY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Check Chances < 3').item.json.Student_Email }}",
+        "subject": "CONFIRMED: Digital Travel Pass & Accommodation",
+        "message": "=Dear {{ $('Check Chances < 3').item.json.Student_Name }},\n\nYour interview trip to {{ $('Check Chances < 3').item.json.Destination_City }} on {{ $('Check Chances < 3').item.json.Interview_Date }} is cleared and confirmed!\n\nHere are your logistics details:\nCompany: {{ $('Check Chances < 3').item.json.Company_Name }}\nHotel: {{ $('Check Chances < 3').item.json.Hotel_Name }}\nAddress: {{ $('Check Chances < 3').item.json.Hotel_Address }}\n\nBest of luck with your interview!\nT&P Cell",
+        "options": {}
+      },
+      "id": "1b6be298-6da2-4b00-8326-623b4cc9090a",
+      "name": "Gmail: Student Success",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "90c4eb78-906b-4322-a141-2e506c255b1a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xpq6OkyUqKGCU2WY",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Admin Manual Run": {
+      "main": [
+        [
+          {
+            "node": "Read Batch Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Batch Data": {
+      "main": [
+        [
+          {
+            "node": "Check Chances < 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Chances < 3": {
+      "main": [
+        [
+          {
+            "node": "Live Forecaster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live Forecaster": {
+      "main": [
+        [
+          {
+            "node": "Max Temp > 40°C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Max Temp > 40°C": {
+      "main": [
+        [
+          {
+            "node": "Update: High Risk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update: High Risk": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Student Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Student Risk": {
+      "main": [
+        [
+          {
+            "node": "Gmail: HR Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update: Success": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Student Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
