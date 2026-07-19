@@ -313,7 +313,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="17">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="18">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -597,6 +597,20 @@ const PROJECTS = [
       {label:"Download Workflow B (Admin Auditor)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9a-github-audit-placement-portal/Administration_Auditor.json"}
     ],
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9a-github-audit-placement-portal"
+  },
+  {
+    id:18, num:"9b", title:"Interview Travel Weather-Risk Checker (HTTP Node Series #2)", level:"Advanced", time:"55 min",
+    category:"HTTP Requests",
+    flow:[["Admin Manual Run","trigger"],["Read Batch Data","service"],["Live Forecaster","logic"],["Max Temp > 40°C","logic"],["Update Sheet","service"],["Gmail (Student + HR)","service"]],
+    desc:"Second build in the HTTP Request series. A batch job reads every upcoming student interview, calls a live weather forecast API for the exact destination and travel date, and automatically clears the trip (hotel + travel pass confirmed) or defers it — emailing both the student and the company's HR team with entirely different content depending on which way the real-time forecast falls.",
+    concepts:["Query parameters instead of a URL path parameter (Day 1 used a path parameter; this uses latitude/longitude/date as query params)","Parsing a nested API response (an object containing an array, one level deeper than Day 1's flat response)","Chained IF nodes (reschedule-limit check, then temperature threshold)","One decision fanning out into different Sheet updates and different emails to different recipients","A keyless public API (no credential setup needed for the weather call itself)"],
+    prereqs:["Completed project 9a","Google Sheets credential","Gmail credential"],
+    errors:["Check Chances < 3 IF node exists specifically to stop the same student being deferred indefinitely — remove it and a permanently bad-weather city would loop forever","Open-Meteo's daily response returns an array even for a single date — forgetting the [0] index is an easy mistake","Latitude/Longitude must be pre-populated per destination city in the Sheet; the workflow doesn't geocode city names itself"],
+    tags:["http","weather-api","query-parameters","multi-branch","gmail","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9b-interview-travel-weather-risk/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9b-interview-travel-weather-risk/sample-data.csv",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9b-interview-travel-weather-risk/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9b-interview-travel-weather-risk"
   },
   {
     id:15, num:"3d", title:"Website Up/Down Monitor — AI Alerts (Groq)", level:"Advanced", time:"45 min",
