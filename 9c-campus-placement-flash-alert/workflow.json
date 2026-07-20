@@ -2,39 +2,46 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "f1a2b3c4-1111-4a1a-8a1a-000000000001",
+      "id": "492c5ff3-c8cf-4764-93eb-982c27491527",
       "name": "Run Publish Job",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [-1120, 320]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "value": "1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA",
           "mode": "list",
-          "cachedResultName": "YourSheetName"
+          "cachedResultName": "GoodMorning",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": "Sheet1",
-          "mode": "name"
-        },
-        "filtersUI": {
-          "values": [
-            { "lookupColumn": "Publish_Status", "lookupValue": "Pending" }
-          ]
+          "value": 1889233076,
+          "mode": "list",
+          "cachedResultName": "Sheet5",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA/edit#gid=1889233076"
         },
         "options": {}
       },
-      "id": "f1a2b3c4-1111-4a1a-8a1a-000000000002",
+      "id": "1de9f6f8-e6d9-4e8d-88a4-f5da8a6eca0d",
       "name": "Get Pending Entries",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [-896, 320],
+      "position": [
+        224,
+        0
+      ],
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "zqCFkP1mXpyrkeQ2",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
@@ -42,11 +49,14 @@
         "mode": "runOnceForEachItem",
         "jsCode": "// ============================================================\n// Attach Department Token\n// Multi-agency pattern: each department publishes with its OWN\n// bearer token. n8n's built-in credential picker is static (one\n// credential per node) so for a per-row/per-department token we\n// build the Authorization header value here instead, and pass it\n// downstream as a field the HTTP Request node reads via expression.\n//\n// IMPORTANT (teaching note): in a real deployment these tokens\n// should NOT be hardcoded in a Code node like this either — pull\n// them from n8n environment variables or a credentials vault.\n// They are inlined here only as placeholders for the lab.\n// ============================================================\n\nconst TOKEN_MAP = {\n  CSE:  'REPLACE_WITH_CSE_DEPT_TOKEN',\n  ECE:  'REPLACE_WITH_ECE_DEPT_TOKEN',\n  MECH: 'REPLACE_WITH_MECH_DEPT_TOKEN',\n  CIVIL:'REPLACE_WITH_CIVIL_DEPT_TOKEN',\n  IT:   'REPLACE_WITH_IT_DEPT_TOKEN'\n  // ...extend up to all 10 departments, one unique token each\n};\n\nconst row = $input.item.json;\nconst deptCode = (row.Department_Code || '').toString().trim().toUpperCase();\nconst token = TOKEN_MAP[deptCode] || null;\n\nif (!token) {\n  throw new Error(`No token configured for department: ${deptCode}`);\n}\n\n// Build the JSON payload that will be POSTed to the display board server.\n// Kept as a plain object here; the HTTP Request node sends it as the JSON body.\nconst payload = {\n  entry_id: row.Entry_ID,\n  student_name: row.Student_Name,\n  roll_no: row.Roll_No,\n  department: deptCode,\n  company_name: row.Company_Name,\n  package_lpa: row.Package_LPA,\n  selection_date: row.Selection_Date,\n  display_message: row.Display_Message\n};\n\nreturn {\n  json: {\n    ...row,\n    department_code: deptCode,\n    auth_header_value: 'Bearer ' + token,\n    payload\n  }\n};"
       },
-      "id": "f1a2b3c4-1111-4a1a-8a1a-000000000003",
+      "id": "ea994ed0-d153-4165-a97f-44c2f641a2b8",
       "name": "Attach Department Token",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-672, 320]
+      "position": [
+        448,
+        0
+      ]
     },
     {
       "parameters": {
@@ -55,8 +65,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "={{ $json.auth_header_value }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "={{ $json.auth_header_value }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -66,61 +82,209 @@
           "timeout": 10000
         }
       },
-      "id": "f1a2b3c4-1111-4a1a-8a1a-000000000004",
+      "id": "34f6f5f5-3832-47db-bbb1-dc2e8ca625c9",
       "name": "Publish to Display Board",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-448, 320]
+      "position": [
+        672,
+        0
+      ]
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
+          "value": "1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA",
           "mode": "list",
-          "cachedResultName": "YourSheetName"
+          "cachedResultName": "GoodMorning",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": "Sheet1",
-          "mode": "name"
+          "value": 1889233076,
+          "mode": "list",
+          "cachedResultName": "Sheet5",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T1D3gRbkmhb4NOhVKce1ktt6NwxyppED2mfBQm1MDRA/edit#gid=1889233076"
         },
         "columns": {
           "mappingMode": "defineBelow",
-          "value": {
-            "Publish_Status": "Published"
-          },
-          "matchingColumns": ["Entry_ID"],
-          "schema": [],
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Entry_ID",
+              "displayName": "Entry_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Student_Name",
+              "displayName": "Student_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Roll_No",
+              "displayName": "Roll_No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Department_Code",
+              "displayName": "Department_Code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company_Name",
+              "displayName": "Company_Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Package_LPA",
+              "displayName": "Package_LPA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Selection_Date",
+              "displayName": "Selection_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Entered_By",
+              "displayName": "Entered_By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publish_Status",
+              "displayName": "Publish_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Display_Message",
+              "displayName": "Display_Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         },
         "options": {}
       },
-      "id": "f1a2b3c4-1111-4a1a-8a1a-000000000005",
+      "id": "b6071feb-d34f-42ec-8113-f47717089d8e",
       "name": "Mark as Published",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [-224, 320],
+      "position": [
+        896,
+        0
+      ],
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "zqCFkP1mXpyrkeQ2",
+          "name": "Google Sheets account"
+        }
       }
     }
   ],
   "connections": {
     "Run Publish Job": {
-      "main": [[{ "node": "Get Pending Entries", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get Pending Entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get Pending Entries": {
-      "main": [[{ "node": "Attach Department Token", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Attach Department Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Attach Department Token": {
-      "main": [[{ "node": "Publish to Display Board", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Publish to Display Board",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Publish to Display Board": {
-      "main": [[{ "node": "Mark as Published", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Mark as Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {}
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "61b7efe9dec4b927bcefbfccd5ef26d989ec604921fbdaa87b7d95391eb60b25"
+  }
 }
