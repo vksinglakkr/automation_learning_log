@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gita Oracle — HTTP Credential Deep Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12141C;
+    --panel:#1A1D29;
+    --panel-raised:#20243380;
+    --line: #2E3247;
+    --parchment:#EDE8DC;
+    --muted:#8B8FA3;
+    --brass:#C9A227;
+    --brass-dim:#8A711F;
+    --slate:#5B7A99;
+    --danger:#C4634B;
+    --safe:#5FA37E;
+    --radius: 10px;
+    --display: 'Fraunces', serif;
+    --body: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #232840 0%, transparent 60%),
+      radial-gradient(ellipse 700px 400px at 100% 0%, #1c2036 0%, transparent 55%),
+      var(--ink);
+    color:var(--parchment);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--brass);}
+
+  ::selection{background:var(--brass); color:#12141C;}
+
+  :focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 3px;
+  }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 56px 24px 100px;
+  }
+
+  /* ---------- header ---------- */
+  header.page{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    flex-wrap:wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:500;
+    font-size: clamp(32px, 5vw, 46px);
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  h1 em{
+    font-style:italic;
+    color:var(--brass);
+    font-weight:400;
+  }
+  .tagline{
+    max-width: 360px;
+    color:var(--muted);
+    font-size:14.5px;
+    margin:0;
+  }
+
+  /* ---------- settings strip ---------- */
+  details.settings{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 32px;
+  }
+  details.settings summary{
+    cursor:pointer;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--muted);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  details.settings summary::-webkit-details-marker{display:none;}
+  details.settings summary::before{
+    content:'▸';
+    color:var(--brass);
+    transition: transform .15s ease;
+  }
+  details.settings[open] summary::before{ transform: rotate(90deg); }
+  .settings-body{ margin-top:14px; }
+  .field-row{ display:flex; flex-direction:column; gap:6px; }
+  label.small{
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  input[type="url"]{
+    width:100%;
+    background:#12141C;
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--parchment);
+    font-family:var(--mono);
+    font-size:13.5px;
+    padding:10px 12px;
+  }
+  .hint{ color:var(--muted); font-size:12.5px; margin:8px 0 0; }
+  code.inline{
+    font-family:var(--mono);
+    background:#12141C;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:1px 6px;
+    font-size:12px;
+    color:var(--brass);
+  }
+
+  /* ---------- layout ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 28px;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  section.card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  h2.section-title{
+    font-family:var(--display);
+    font-size:20px;
+    font-weight:500;
+    margin:0 0 4px;
+  }
+  p.section-sub{
+    color:var(--muted);
+    font-size:13.5px;
+    margin:0 0 20px;
+  }
+
+  /* ---------- question ---------- */
+  select, textarea{
+    width:100%;
+    background:#12141C;
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--parchment);
+    font-family:var(--body);
+    font-size:14.5px;
+    padding:11px 13px;
+  }
+  select{ margin-bottom:12px; appearance:none; cursor:pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238B8FA3'/></svg>");
+    background-repeat:no-repeat; background-position: right 14px center; padding-right:32px;
+  }
+  textarea{ min-height:88px; resize:vertical; font-family:var(--body); }
+  textarea:disabled{ color:var(--muted); }
+
+  /* ---------- method radio cards ---------- */
+  .methods{
+    display:grid;
+    gap:12px;
+    margin-top: 6px;
+  }
+  .method{
+    position:relative;
+    border:1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px 14px 46px;
+    cursor:pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+    background: #171a26;
+  }
+  .method:hover{ border-color:#3a3f5c; transform: translateY(-1px); }
+  .method input{
+    position:absolute;
+    left:16px; top:17px;
+    accent-color: var(--brass);
+    width:16px; height:16px;
+  }
+  .method.selected{
+    border-color: var(--brass-dim);
+    background: linear-gradient(180deg, #221f14, #191c28);
+  }
+  .method-head{
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+    margin-bottom:4px;
+  }
+  .m-eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+    color:var(--brass); text-transform:uppercase;
+  }
+  .m-title{ font-weight:600; font-size:14.5px; }
+  .m-desc{ color:var(--muted); font-size:13px; margin:0; }
+  .m-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;
+    padding:2px 8px; border-radius:20px; margin-left:auto;
+  }
+  .badge-hidden{ background:#173029; color:var(--safe); border:1px solid #285142;}
+  .badge-abstracted{ background:#1c2536; color:var(--slate); border:1px solid #2c3a55;}
+
+  button.send{
+    margin-top:18px;
+    width:100%;
+    background: linear-gradient(180deg, #d8b23a, var(--brass));
+    color:#1a1200;
+    border:none;
+    border-radius: 8px;
+    padding: 13px 18px;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    transition: filter .15s ease, transform .1s ease;
+  }
+  button.send:hover{ filter:brightness(1.08); }
+  button.send:active{ transform: translateY(1px); }
+  button.send:disabled{
+    background:#3a3d4d; color:var(--muted); cursor:not-allowed;
+  }
+
+  /* ---------- trace panel (signature element) ---------- */
+  .trace{
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  .pipeline{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .node{
+    border:1px solid var(--line);
+    background:#12141C;
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:11.5px;
+    color:var(--parchment);
+    white-space:nowrap;
+  }
+  .node.active{ border-color:var(--brass); color:var(--brass); }
+  .arrow{ color:var(--muted); }
+
+  .lock-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    margin-bottom:14px;
+    background:#12141C;
+  }
+  .lock-icon{ font-size:16px; line-height:1; }
+  .lock-state{ font-size:12px; }
+  .lock-state b{ display:block; font-family:var(--body); font-size:13px; margin-bottom:1px; }
+  .lock-row.safe{ border-color:#285142; }
+  .lock-row.safe .lock-state{ color:var(--safe); }
+  .lock-row.abstracted{ border-color:#2c3a55; }
+  .lock-row.abstracted .lock-state{ color:var(--slate); }
+
+  pre.trace-json{
+    background:#0e1019;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    overflow-x:auto;
+    margin:0 0 14px;
+    color:#c7cad9;
+  }
+  pre.trace-json .k{ color:#7fb1c9; }
+  pre.trace-json .s{ color:#d0b060; }
+  pre.trace-json .masked{ color:var(--danger); }
+  pre.trace-json .safe-val{ color:var(--safe); }
+
+  p.trace-note{
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.6;
+    margin:0;
+  }
+
+  /* ---------- response ---------- */
+  .response-card{ margin-top:24px; }
+  .response-body{
+    border-left: 2px solid var(--brass-dim);
+    padding: 4px 0 4px 18px;
+    min-height: 60px;
+    font-family: var(--display);
+    font-size: 17px;
+    line-height:1.7;
+    color: var(--parchment);
+  }
+  .response-body.empty{
+    font-family: var(--body);
+    color: var(--muted);
+    font-size: 14px;
+    font-style: normal;
+  }
+  .response-meta{
+    margin-top:14px;
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .response-meta span b{ color:var(--parchment); font-weight:500; }
+
+  .spinner{
+    display:inline-block; width:14px; height:14px;
+    border:2px solid #3a3d4d; border-top-color: var(--brass);
+    border-radius:50%;
+    animation: spin .8s linear infinite;
+    vertical-align:-2px;
+    margin-right:8px;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .error-box{
+    border:1px solid #4a2a22;
+    background:#1f1512;
+    color:#e0a08e;
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:13px;
+    font-family: var(--mono);
+  }
+
+  footer.page{
+    margin-top:56px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:12.5px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div>
+      <p class="eyebrow">Day 4 · HTTP &amp; Credentials, in depth</p>
+      <h1>Gita Oracle <em>console</em></h1>
+      <p class="tagline">One question, four ways of calling Groq. Watch where the key lives in each.</p>
+    </div>
+  </header>
+
+  <details class="settings">
+    <summary>Webhook connection</summary>
+    <div class="settings-body">
+      <div class="field-row">
+        <label class="small" for="webhookUrl">n8n production webhook URL</label>
+        <input type="url" id="webhookUrl" placeholder="https://your-instance.app.n8n.cloud/webhook/gita-oracle" />
+      </div>
+      <p class="hint">
+        Every method posts to this <em>same</em> webhook — the payload's <code class="inline">method</code> field is what your Switch node reads to route to the right branch. Nothing here talks to Groq directly.
+      </p>
+    </div>
+  </details>
+
+  <div class="grid">
+
+    <!-- LEFT COLUMN: question + methods -->
+    <div>
+      <section class="card">
+        <h2 class="section-title">Ask the text</h2>
+        <p class="section-sub">Pick a starting question, or write your own.</p>
+
+        <select id="preset">
+          <option value="What does Krishna say about performing duty without attachment to results?">Duty without attachment to results</option>
+          <option value="How does the Gita describe the eternal nature of the soul (atman)?">The eternal nature of the soul</option>
+          <option value="What does Krishna mean by the three gunas — sattva, rajas, and tamas?">The three gunas</option>
+          <option value="What is the path of devotion (bhakti yoga) according to the Gita?">The path of devotion</option>
+          <option value="custom">Write my own question…</option>
+        </select>
+        <textarea id="question" rows="3">What does Krishna say about performing duty without attachment to results?</textarea>
+      </section>
+
+      <section class="card" style="margin-top:20px;">
+        <h2 class="section-title">Choose the calling pattern</h2>
+        <p class="section-sub">Four ways to reach the same model. Same question, different plumbing.</p>
+
+        <div class="methods" id="methods">
+
+          <label class="method selected" data-method="agent">
+            <input type="radio" name="method" value="agent" checked>
+            <div class="method-head">
+              <span class="m-eyebrow">01</span>
+              <span class="m-title">AI Agent node</span>
+              <span class="m-badge badge-abstracted">n8n-managed</span>
+            </div>
+            <p class="m-desc">n8n's AI Agent + Groq Chat Model sub-node does the calling for you. No HTTP request to inspect — it's abstracted entirely.</p>
+          </label>
+
+          <label class="method" data-method="predefined">
+            <input type="radio" name="method" value="predefined">
+            <div class="method-head">
+              <span class="m-eyebrow">02</span>
+              <span class="m-title">HTTP Request + Groq credential</span>
+              <span class="m-badge badge-hidden">Hidden key</span>
+            </div>
+            <p class="m-desc">You build the HTTP call by hand, but auth comes from n8n's dedicated <code class="inline">groqApi</code> credential type. The key never enters the node's visible parameters.</p>
+          </label>
+
+          <label class="method" data-method="header_auth">
+            <input type="radio" name="method" value="header_auth">
+            <div class="method-head">
+              <span class="m-eyebrow">03</span>
+              <span class="m-title">HTTP Request + Header Auth</span>
+              <span class="m-badge badge-hidden">Hidden key</span>
+            </div>
+            <p class="m-desc">No dedicated credential type this time. The key lives in a Generic "Header Auth" credential — still fully hidden from the exported workflow JSON.</p>
+          </label>
+
+          <label class="method" data-method="header_auth_persona">
+            <input type="radio" name="method" value="header_auth_persona">
+            <div class="method-head">
+              <span class="m-eyebrow">04</span>
+              <span class="m-title">Header Auth + Gita guide persona</span>
+              <span class="m-badge badge-hidden">Hidden key</span>
+            </div>
+            <p class="m-desc">Same hidden-key mechanism as 03, plus a hand-written system prompt. Proof that the manual route doesn't cost you customization.</p>
+          </label>
+
+        </div>
+
+        <button class="send" id="sendBtn" type="button">Send to Groq</button>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN: trace + response -->
+    <div>
+      <section class="card trace">
+        <h2 class="section-title">Request trace</h2>
+        <p class="section-sub">What actually gets sent — and where the key sits.</p>
+
+        <div class="pipeline" id="pipeline"></div>
+        <div class="lock-row" id="lockRow"></div>
+        <pre class="trace-json" id="traceJson"></pre>
+        <p class="trace-note" id="traceNote"></p>
+      </section>
+
+      <section class="card response-card">
+        <h2 class="section-title">Response</h2>
+        <p class="section-sub">Whatever comes back from your webhook, verbatim.</p>
+        <div class="response-body empty" id="responseBody">
+          Nothing sent yet. Choose a method and press "Send to Groq."
+        </div>
+        <div class="response-meta" id="responseMeta"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="page">
+    <span>No data leaves this page except the POST to your webhook. No sheet, no storage.</span>
+    <span>Payload key: <code class="inline">{ question, method, ts }</code></span>
+  </footer>
+
+</div>
+
+<script>
+  const METHOD_DATA = {
+    agent: {
+      pipeline: ['Browser', 'n8n Webhook', 'AI Agent node', 'Groq Chat Model', 'Groq API'],
+      lock: {
+        cls: 'abstracted',
+        icon: '◐',
+        title: 'Abstracted — no manual auth to see',
+        sub: 'The AI Agent node owns the whole call, key included.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"agent"</span>,
+  <span class="k">"auth"</span>: <span class="safe-val">"handled internally by AI Agent node"</span>
+}`,
+      note: 'There is no HTTP Request node here at all — the AI Agent sub-node builds and signs the call to Groq internally, using its own Groq Chat Model credential. Fastest to build, least visible.'
+    },
+    predefined: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'groqApi credential', 'Groq API'],
+      lock: {
+        cls: 'safe',
+        icon: '🔒',
+        title: 'Hidden — dedicated credential type',
+        sub: 'Key stored in n8n\'s built-in "Groq API" credential.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"predefined"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  }
+}`,
+      note: 'The HTTP Request node references the groqApi credential type by name. The key is injected by n8n at execution time and never appears in the node\'s parameters or in an exported workflow JSON.'
+    },
+    header_auth: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Header Auth credential', 'Groq API'],
+      lock: {
+        cls: 'safe',
+        icon: '🔒',
+        title: 'Hidden — generic credential',
+        sub: 'Key stored in a Generic "Header Auth" credential.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"header_auth"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  }
+}`,
+      note: 'Groq has no dedicated n8n credential type by default for this route — so the key goes into a Generic "Header Auth" credential instead. Same hiding guarantee as method 02, just a more general mechanism you can reuse for any API.'
+    },
+    header_auth_persona: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Header Auth credential', 'Groq API'],
+      lock: {
+        cls: 'safe',
+        icon: '🔒',
+        title: 'Hidden — generic credential + custom prompt',
+        sub: 'Same masked key, plus a body-level system prompt.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"header_auth_persona"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  },
+  <span class="k">"system_prompt"</span>: <span class="s">"You are a patient guide to the Bhagavad Gita…"</span>
+}`,
+      note: 'Identical credential handling to method 03. The difference lives in the request body: a system message written into the node\'s JSON, giving the model a consistent teaching voice — nothing about hiding the key limits how you shape the call.'
+    }
+  };
+
+  const methodsEl = document.getElementById('methods');
+  const pipelineEl = document.getElementById('pipeline');
+  const lockRowEl = document.getElementById('lockRow');
+  const traceJsonEl = document.getElementById('traceJson');
+  const traceNoteEl = document.getElementById('traceNote');
+  const presetEl = document.getElementById('preset');
+  const questionEl = document.getElementById('question');
+  const sendBtn = document.getElementById('sendBtn');
+  const responseBody = document.getElementById('responseBody');
+  const responseMeta = document.getElementById('responseMeta');
+  const webhookInput = document.getElementById('webhookUrl');
+
+  function renderTrace(method){
+    const d = METHOD_DATA[method];
+
+    pipelineEl.innerHTML = d.pipeline
+      .map((n, i) => {
+        const isLast = i === d.pipeline.length - 1;
+        const nodeHtml = `<span class="node${isLast ? ' active' : ''}">${n}</span>`;
+        return i === 0 ? nodeHtml : `<span class="arrow">→</span>${nodeHtml}`;
+      })
+      .join('');
+
+    lockRowEl.className = 'lock-row ' + d.lock.cls;
+    lockRowEl.innerHTML = `
+      <span class="lock-icon">${d.lock.icon}</span>
+      <span class="lock-state"><b>${d.lock.title}</b>${d.lock.sub}</span>
+    `;
+
+    traceJsonEl.innerHTML = d.json;
+    traceNoteEl.textContent = d.note;
+  }
+
+  methodsEl.addEventListener('change', (e) => {
+    if (e.target.name !== 'method') return;
+    document.querySelectorAll('.method').forEach(m => m.classList.remove('selected'));
+    e.target.closest('.method').classList.add('selected');
+    renderTrace(e.target.value);
+  });
+
+  presetEl.addEventListener('change', () => {
+    if (presetEl.value === 'custom') {
+      questionEl.value = '';
+      questionEl.disabled = false;
+      questionEl.focus();
+    } else {
+      questionEl.value = presetEl.value;
+      questionEl.disabled = false;
+    }
+  });
+
+  function getSelectedMethod(){
+    return document.querySelector('input[name="method"]:checked').value;
+  }
+
+  async function sendToWebhook(){
+    const url = webhookInput.value.trim();
+    const question = questionEl.value.trim();
+    const method = getSelectedMethod();
+
+    if (!url){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">No webhook URL set. Open "Webhook connection" above and paste your n8n production URL.</div>`;
+      responseMeta.textContent = '';
+      return;
+    }
+    if (!question){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">Write a question first — the webhook has nothing to send.</div>`;
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    responseBody.className = 'response-body empty';
+    responseBody.innerHTML = `<span class="spinner"></span>Waiting on the ${method} branch…`;
+    responseMeta.textContent = '';
+
+    const startedAt = performance.now();
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          method,
+          ts: new Date().toISOString()
+        })
+      });
+
+      const elapsedMs = Math.round(performance.now() - startedAt);
+
+      if (!res.ok){
+        throw new Error(`Webhook responded ${res.status} ${res.statusText}`);
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      let text;
+      if (contentType.includes('application/json')){
+        const data = await res.json();
+        text = data.reply || data.answer || data.text || data.output || JSON.stringify(data, null, 2);
+      } else {
+        text = await res.text();
+      }
+
+      responseBody.className = 'response-body';
+      responseBody.textContent = text;
+      responseMeta.innerHTML = `<span>Method: <b>${method}</b></span><span>Round trip: <b>${elapsedMs} ms</b></span>`;
+
+    } catch (err){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">Request failed: ${err.message}. Check the webhook URL, and that the workflow is active (production URL, not test).</div>`;
+      responseMeta.textContent = '';
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send to Groq';
+    }
+  }
+
+  sendBtn.addEventListener('click', sendToWebhook);
+
+  // init
+  renderTrace('agent');
+</script>
+
+</body>
+</html>
