@@ -314,7 +314,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="19">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="20">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -612,6 +612,20 @@ const PROJECTS = [
     dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9b-interview-travel-weather-risk/sample-data.csv",
     readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9b-interview-travel-weather-risk/README.md",
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9b-interview-travel-weather-risk"
+  },
+  {
+    id:20, num:"9c", title:"Secure Campus Placement Flash-Alert Engine (HTTP Node Series #3)", level:"Advanced", time:"50 min",
+    category:"HTTP Requests",
+    flow:[["Run Publish Job","trigger"],["Get Pending Entries","service"],["Attach Department Token","logic"],["Publish to Display Board","logic"],["Mark as Published","service"]],
+    desc:"Third build in the HTTP Request series — the first to write instead of read. When the T&P cell logs a student's selection, the workflow finds every unpublished entry, wraps it in a JSON payload, authenticates with that department's own Bearer token, and POSTs it to a central display board server, then marks the row published so it's never sent twice.",
+    concepts:["Becoming a publisher, not just a consumer — the first POST in the series after two GET-only builds","Sending data in a JSON request body instead of a URL, since the payload is sensitive","Authorization: Bearer token headers for authenticated writes","Why n8n's built-in credential picker (one static credential per node) isn't enough for a per-row, per-department token, and looking the token up dynamically in a Code node instead","Multi-agency architecture: each department's own token gives independent traceability and revocation"],
+    prereqs:["Completed 9a and 9b","Google Sheets credential","A display board server endpoint with per-department Bearer tokens issued"],
+    errors:["Every value in this workflow is a placeholder by design — Sheet ID, credential ID, server URL, and all department tokens must be filled in before it runs","Hardcoding tokens directly in the Code node is only acceptable for this lab — a real deployment should pull them from environment variables or a secrets manager","TOKEN_MAP only covers 5 example departments — extend it to match your real department list"],
+    tags:["http","post","json-body","bearer-token","multi-tenant","authentication","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9c-campus-placement-flash-alert/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9c-campus-placement-flash-alert/sample-data.csv",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9c-campus-placement-flash-alert/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9c-campus-placement-flash-alert"
   },
   {
     id:19, num:"10", title:"Bulk Email Broadcast", level:"Beginner", time:"20 min",
