@@ -60,7 +60,8 @@
             { "value2": "header_auth", "output": 2 },
             { "value2": "bearer_auth", "output": 3 },
             { "value2": "code_query", "output": 4 },
-            { "value2": "config_abstraction", "output": 5 }
+            { "value2": "config_abstraction", "output": 5 },
+             { "value2": "static_query", "output": 6 }
           ]
         },
         "fallbackOutput": "none"
