@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>India Open Data Explorer — Auth Mechanism Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12161C;
+    --panel:#1B2027;
+    --line: #2C333C;
+    --parchment:#EDE9DD;
+    --muted:#8B93A0;
+    --saffron:#D48A2E;
+    --saffron-dim:#8F5F1F;
+    --leaf:#4C8C6B;
+    --danger:#C4634B;
+    --safe:#4C8C6B;
+    --fail:#C4634B;
+    --slate:#5B7A99;
+    --radius: 10px;
+    --display: 'Fraunces', serif;
+    --body: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #232a24 0%, transparent 60%),
+      radial-gradient(ellipse 700px 400px at 100% 0%, #24211c 0%, transparent 55%),
+      var(--ink);
+    color:var(--parchment);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--saffron); color:#1a1200;}
+  :focus-visible{ outline: 2px solid var(--saffron); outline-offset: 3px; }
+
+  .wrap{ max-width: 1080px; margin: 0 auto; padding: 56px 24px 100px; }
+
+  header.page{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:24px; flex-wrap:wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px; margin-bottom: 40px;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--saffron); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--display); font-weight:500;
+    font-size: clamp(30px, 4.6vw, 42px); margin:0; letter-spacing:-0.01em;
+  }
+  h1 em{ font-style:italic; color:var(--leaf); font-weight:400; }
+  .tagline{ max-width: 380px; color:var(--muted); font-size:14.5px; margin:0; }
+
+  details.settings{
+    background:var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 32px;
+  }
+  details.settings summary{
+    cursor:pointer; font-family:var(--mono); font-size:13px; color:var(--muted);
+    list-style:none; display:flex; align-items:center; gap:8px;
+  }
+  details.settings summary::-webkit-details-marker{display:none;}
+  details.settings summary::before{ content:'▸'; color:var(--saffron); transition: transform .15s ease; }
+  details.settings[open] summary::before{ transform: rotate(90deg); }
+  .settings-body{ margin-top:14px; }
+  .field-row{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  label.small{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  input[type="url"], input[type="text"]{
+    width:100%; background:#12161C; border:1px solid var(--line); border-radius:6px;
+    color:var(--parchment); font-family:var(--mono); font-size:13.5px; padding:10px 12px;
+  }
+  .hint{ color:var(--muted); font-size:12.5px; margin:8px 0 0; }
+  code.inline{
+    font-family:var(--mono); background:#12161C; border:1px solid var(--line);
+    border-radius:4px; padding:1px 6px; font-size:12px; color:var(--saffron);
+  }
+
+  .grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; align-items:start; }
+  @media (max-width: 860px){ .grid{ grid-template-columns: 1fr; } }
+
+  section.card{
+    background:var(--panel); border:1px solid var(--line); border-radius: var(--radius); padding: 24px;
+  }
+  h2.section-title{ font-family:var(--display); font-size:20px; font-weight:500; margin:0 0 4px; }
+  p.section-sub{ color:var(--muted); font-size:13.5px; margin:0 0 20px; }
+
+  select, input[type="text"].state-input{
+    width:100%; background:#12161C; border:1px solid var(--line); border-radius:6px;
+    color:var(--parchment); font-family:var(--body); font-size:14.5px; padding:11px 13px;
+  }
+  select{
+    margin-bottom:0; appearance:none; cursor:pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238B93A0'/></svg>");
+    background-repeat:no-repeat; background-position: right 14px center; padding-right:32px;
+  }
+
+  .methods{ display:grid; gap:12px; margin-top: 6px; }
+  .method{
+    position:relative; border:1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px 14px 46px; cursor:pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+    background: #171b21;
+  }
+  .method:hover{ border-color:#3a4250; transform: translateY(-1px); }
+  .method input{ position:absolute; left:16px; top:17px; accent-color: var(--saffron); width:16px; height:16px; }
+  .method.selected{ border-color: var(--saffron-dim); background: linear-gradient(180deg, #221c14, #191d24); }
+  .method-head{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+  .m-eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--saffron); text-transform:uppercase; }
+  .m-title{ font-weight:600; font-size:14.5px; }
+  .m-desc{ color:var(--muted); font-size:13px; margin:0; }
+  .m-badge{
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px;
+    letter-spacing:.04em; padding:2px 8px; border-radius:20px; margin-left:auto;
+  }
+  .badge-safe{ background:#16261e; color:var(--safe); border:1px solid #244333;}
+  .badge-fail{ background:#291a16; color:var(--fail); border:1px solid #452a22;}
+  .badge-warn{ background:#2a2213; color:var(--saffron); border:1px solid #4a3a1c;}
+  .badge-code{ background:#1c2536; color:#7fa8d6; border:1px solid #2c3a55;}
+
+  button.send{
+    margin-top:18px; width:100%; background: linear-gradient(180deg, #e0a34a, var(--saffron));
+    color:#1a1200; border:none; border-radius: 8px; padding: 13px 18px;
+    font-family:var(--body); font-weight:600; font-size:14.5px; cursor:pointer;
+    transition: filter .15s ease, transform .1s ease;
+  }
+  button.send:hover{ filter:brightness(1.08); }
+  button.send:active{ transform: translateY(1px); }
+  button.send:disabled{ background:#3a3d4d; color:var(--muted); cursor:not-allowed; }
+
+  .trace{ font-family:var(--mono); font-size:12.5px; }
+  .pipeline{ display:flex; align-items:center; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+  .node{ border:1px solid var(--line); background:#12161C; border-radius:6px; padding:6px 10px; font-size:11.5px; color:var(--parchment); white-space:nowrap; }
+  .node.active{ border-color:var(--saffron); color:var(--saffron); }
+  .node.fail-node{ border-color:var(--fail); color:var(--fail); }
+  .arrow{ color:var(--muted); }
+
+  .lock-row{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
+    border:1px solid var(--line); margin-bottom:14px; background:#12161C;
+  }
+  .lock-icon{ font-size:16px; line-height:1; }
+  .lock-state{ font-size:12px; }
+  .lock-state b{ display:block; font-family:var(--body); font-size:13px; margin-bottom:1px; }
+  .lock-row.safe{ border-color:#244333; } .lock-row.safe .lock-state{ color:var(--safe); }
+  .lock-row.fail{ border-color:#452a22; } .lock-row.fail .lock-state{ color:var(--fail); }
+  .lock-row.warn{ border-color:#4a3a1c; } .lock-row.warn .lock-state{ color:var(--saffron); }
+
+  pre.trace-json{
+    background:#0e1116; border:1px solid var(--line); border-radius:8px; padding:14px 16px;
+    overflow-x:auto; margin:0 0 14px; color:#c7cad9;
+  }
+  pre.trace-json .k{ color:#7fb1c9; } pre.trace-json .s{ color:#d0b060; }
+  pre.trace-json .masked{ color:var(--fail); } pre.trace-json .safe-val{ color:var(--safe); }
+  pre.trace-json .exposed{ color:var(--danger); font-weight:600; }
+
+  p.trace-note{ color:var(--muted); font-size:12.5px; line-height:1.6; margin:0; }
+
+  .response-card{ margin-top:24px; }
+  .response-body{
+    border-left: 2px solid var(--saffron-dim); padding: 4px 0 4px 18px; min-height: 60px;
+    font-family: var(--mono); font-size: 13.5px; line-height:1.7; color: var(--parchment);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .response-body.empty{ font-family: var(--body); color: var(--muted); font-size: 14px; }
+  .response-meta{ margin-top:14px; display:flex; gap:16px; flex-wrap:wrap; font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .response-meta span b{ color:var(--parchment); font-weight:500; }
+
+  .spinner{
+    display:inline-block; width:14px; height:14px; border:2px solid #3a3d4d; border-top-color: var(--saffron);
+    border-radius:50%; animation: spin .8s linear infinite; vertical-align:-2px; margin-right:8px;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .error-box{
+    border:1px solid #4a2a22; background:#1f1512; color:#e0a08e; border-radius:8px;
+    padding:12px 14px; font-size:13px; font-family: var(--mono);
+  }
+  .lesson-box{
+    border:1px solid #4a3a1c; background:#20190f; color:#e0c088; border-radius:8px;
+    padding:12px 14px; font-size:12.5px; font-family: var(--body); margin-top:10px;
+  }
+
+  footer.page{
+    margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted);
+    font-size:12.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div>
+      <p class="eyebrow">Non-AI · Same Skeleton, New Provider</p>
+      <h1>India Open Data <em>explorer</em></h1>
+      <p class="tagline">One state, six ways of authenticating against data.gov.in. Three of them fail on purpose.</p>
+    </div>
+  </header>
+
+  <details class="settings">
+    <summary>Webhook connection</summary>
+    <div class="settings-body">
+      <div class="field-row">
+        <label class="small" for="webhookUrl">n8n production webhook URL</label>
+        <input type="url" id="webhookUrl" placeholder="https://your-instance.app.n8n.cloud/webhook/census-lookup" />
+      </div>
+      <p class="hint">
+        Every method posts to this <em>same</em> webhook — the payload's <code class="inline">method</code> field routes to the matching branch. Branches 3 and 4 are expected to return an error — that's the lesson, not a bug.
+      </p>
+    </div>
+  </details>
+
+  <div class="grid">
+
+    <div>
+      <section class="card">
+        <h2 class="section-title">Query the dataset</h2>
+        <p class="section-sub">Pick a state to filter by.</p>
+
+        <select id="stateSelect" style="margin-bottom:12px;">
+          <option value="Maharashtra">Maharashtra</option>
+          <option value="Uttar Pradesh">Uttar Pradesh</option>
+          <option value="Karnataka">Karnataka</option>
+          <option value="Tamil Nadu">Tamil Nadu</option>
+          <option value="West Bengal">West Bengal</option>
+          <option value="Rajasthan">Rajasthan</option>
+          <option value="custom">Type my own…</option>
+        </select>
+        <input type="text" class="state-input" id="stateInput" value="Maharashtra" disabled />
+      </section>
+
+      <section class="card" style="margin-top:20px;">
+        <h2 class="section-title">Choose the auth mechanism</h2>
+        <p class="section-sub">data.gov.in only accepts one of these. Watch which.</p>
+
+        <div class="methods" id="methods">
+
+          <label class="method selected" data-method="hardcoded">
+            <input type="radio" name="method" value="hardcoded" checked>
+            <div class="method-head">
+              <span class="m-eyebrow">01</span>
+              <span class="m-title">Hardcoded key in URL</span>
+              <span class="m-badge badge-warn">Anti-pattern</span>
+            </div>
+            <p class="m-desc">Key typed directly into the node's URL field. Works — but it's sitting in plain text in the workflow JSON. Included to show what "not hidden" actually looks like.</p>
+          </label>
+
+          <label class="method" data-method="query_auth">
+            <input type="radio" name="method" value="query_auth">
+            <div class="method-head">
+              <span class="m-eyebrow">02</span>
+              <span class="m-title">Generic Query Auth</span>
+              <span class="m-badge badge-safe">Correct · Hidden</span>
+            </div>
+            <p class="m-desc">The key is injected as a hidden URL parameter by a credential — this is the one mechanism data.gov.in actually documents and accepts.</p>
+          </label>
+
+          <label class="method" data-method="header_auth">
+            <input type="radio" name="method" value="header_auth">
+            <div class="method-head">
+              <span class="m-eyebrow">03</span>
+              <span class="m-title">Generic Header Auth</span>
+              <span class="m-badge badge-fail">Fails on purpose</span>
+            </div>
+            <p class="m-desc">Same hidden-key mechanism that worked for Groq's Header Auth branch — but data.gov.in ignores custom headers entirely. This will return an error.</p>
+          </label>
+
+          <label class="method" data-method="bearer_auth">
+            <input type="radio" name="method" value="bearer_auth">
+            <div class="method-head">
+              <span class="m-eyebrow">04</span>
+              <span class="m-title">Generic Bearer Auth</span>
+              <span class="m-badge badge-fail">Fails on purpose</span>
+            </div>
+            <p class="m-desc">The pattern that worked for every AI provider in the last project. Here it fails too — proof that "Bearer" isn't a universal standard, just a common one.</p>
+          </label>
+
+          <label class="method" data-method="code_query">
+            <input type="radio" name="method" value="code_query">
+            <div class="method-head">
+              <span class="m-eyebrow">05</span>
+              <span class="m-title">Code-built query string</span>
+              <span class="m-badge badge-code">Custom logic</span>
+            </div>
+            <p class="m-desc">A Code node sanitizes and title-cases the state name, URL-encodes it, and assembles the filter string — same hidden key as 02, built programmatically.</p>
+          </label>
+
+          <label class="method" data-method="config_abstraction">
+            <input type="radio" name="method" value="config_abstraction">
+            <div class="method-head">
+              <span class="m-eyebrow">06</span>
+              <span class="m-title">Config-driven request</span>
+              <span class="m-badge badge-safe">Correct · Hidden</span>
+            </div>
+            <p class="m-desc">A Set node predefines the dataset ID, field limit, and label once — the HTTP node just references that config, same hidden key as 02.</p>
+          </label>
+
+        </div>
+
+        <button class="send" id="sendBtn" type="button">Query data.gov.in</button>
+      </section>
+    </div>
+
+    <div>
+      <section class="card trace">
+        <h2 class="section-title">Request trace</h2>
+        <p class="section-sub">What actually gets sent — and whether the API will accept it.</p>
+
+        <div class="pipeline" id="pipeline"></div>
+        <div class="lock-row" id="lockRow"></div>
+        <pre class="trace-json" id="traceJson"></pre>
+        <p class="trace-note" id="traceNote"></p>
+      </section>
+
+      <section class="card response-card">
+        <h2 class="section-title">Response</h2>
+        <p class="section-sub">Whatever your webhook returns, verbatim.</p>
+        <div class="response-body empty" id="responseBody">
+          Nothing sent yet. Choose a method and press "Query data.gov.in."
+        </div>
+        <div class="response-meta" id="responseMeta"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="page">
+    <span>No data leaves this page except the POST to your webhook.</span>
+    <span>Payload key: <code class="inline">{ state, method, ts }</code></span>
+  </footer>
+
+</div>
+
+<script>
+  const METHOD_DATA = {
+    hardcoded: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Groq API — key inline'],
+      lock: { cls: 'warn', icon: '🔓', title: 'Exposed — key visible in node JSON', sub: 'No credential involved at all.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"hardcoded"</span>,
+  <span class="k">"url"</span>: <span class="exposed">"…?api-key=579b464db66ec23...&format=json"</span>
+}`,
+      note: 'The key sits in plain text inside the node\'s URL field. It works, but export this workflow and hand it to anyone — they now have your key. This is what "not hidden" concretely looks like.',
+      lesson: null
+    },
+    query_auth: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Query Auth credential', 'data.gov.in API'],
+      lock: { cls: 'safe', icon: '🔒', title: 'Hidden — correct mechanism', sub: 'Key injected as a masked query parameter.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"query_auth"</span>,
+  <span class="k">"url"</span>: <span class="s">"…?format=json&filters[state]=…"</span>,
+  <span class="k">"api-key"</span>: <span class="masked">"••••••••"</span> <span class="k">(query param, hidden)</span>
+}`,
+      note: 'A Generic Query Auth credential appends the key as a URL parameter at execution time — hidden from the workflow JSON, and matching exactly what data.gov.in\'s docs specify.',
+      lesson: null
+    },
+    header_auth: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Header Auth credential', 'data.gov.in API'],
+      lock: { cls: 'fail', icon: '❌', title: 'Hidden, but wrong mechanism', sub: 'Server never reads this header.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"header_auth"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"api-key"</span>: <span class="masked">"••••••••"</span>
+  }
+}`,
+      note: 'The key is hidden correctly, but sent in the wrong place. data.gov.in only reads api-key from the URL, never from headers, so this request is treated as unauthenticated.',
+      lesson: 'Expect an API_KEY_MISSING-style error back — that confirms the mechanism, not just the hiding, has to match the provider\'s docs.'
+    },
+    bearer_auth: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Bearer Auth credential', 'data.gov.in API'],
+      lock: { cls: 'fail', icon: '❌', title: 'Hidden, but wrong mechanism', sub: 'Authorization header is ignored here.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"bearer_auth"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  }
+}`,
+      note: 'This exact pattern worked for every provider in the AI project. Here it fails — proof that Bearer tokens are a common convention, not a universal one.',
+      lesson: 'If you rebuilt this against Groq or OpenAI, this branch would work. The provider decides the mechanism, not the tool.'
+    },
+    code_query: {
+      pipeline: ['Browser', 'n8n Webhook', 'Code node', 'HTTP Request node', 'Query Auth credential', 'data.gov.in API'],
+      lock: { cls: 'safe', icon: '🔒', title: 'Hidden key + sanitized input', sub: 'Same masked key as 02, built in JavaScript.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"code_query"</span>,
+  <span class="k">"builtQuery"</span>: <span class="safe-val">"trimmed, title-cased, URL-encoded by Code node"</span>
+}`,
+      note: 'A Code node runs first — trims the input, strips anything that isn\'t a letter, title-cases it, and URL-encodes it before the HTTP node ever sees it. Prevents malformed filters from reaching the API at all.',
+      lesson: null
+    },
+    config_abstraction: {
+      pipeline: ['Browser', 'n8n Webhook', 'Set node (config)', 'HTTP Request node', 'Query Auth credential', 'data.gov.in API'],
+      lock: { cls: 'safe', icon: '🔒', title: 'Hidden key + centralized config', sub: 'Dataset ID and limits defined once, upstream.' },
+      json: `{
+  <span class="k">"state"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"config_abstraction"</span>,
+  <span class="k">"resourceId"</span>: <span class="s">"YOUR_RESOURCE_ID"</span>,
+  <span class="k">"limit"</span>: <span class="s">10</span>
+}`,
+      note: 'A Set node predefines the resource ID, row limit, and dataset label once — if the dataset changes, you edit one node instead of hunting through every HTTP node\'s URL string.',
+      lesson: null
+    }
+  };
+
+  const methodsEl = document.getElementById('methods');
+  const pipelineEl = document.getElementById('pipeline');
+  const lockRowEl = document.getElementById('lockRow');
+  const traceJsonEl = document.getElementById('traceJson');
+  const traceNoteEl = document.getElementById('traceNote');
+  const stateSelect = document.getElementById('stateSelect');
+  const stateInput = document.getElementById('stateInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const responseBody = document.getElementById('responseBody');
+  const responseMeta = document.getElementById('responseMeta');
+  const webhookInput = document.getElementById('webhookUrl');
+
+  function renderTrace(method){
+    const d = METHOD_DATA[method];
+
+    pipelineEl.innerHTML = d.pipeline
+      .map((n, i) => {
+        const isLast = i === d.pipeline.length - 1;
+        const failClass = (method === 'header_auth' || method === 'bearer_auth') && isLast ? ' fail-node' : (isLast ? ' active' : '');
+        const nodeHtml = `<span class="node${failClass}">${n}</span>`;
+        return i === 0 ? nodeHtml : `<span class="arrow">→</span>${nodeHtml}`;
+      })
+      .join('');
+
+    lockRowEl.className = 'lock-row ' + d.lock.cls;
+    lockRowEl.innerHTML = `
+      <span class="lock-icon">${d.lock.icon}</span>
+      <span class="lock-state"><b>${d.lock.title}</b>${d.lock.sub}</span>
+    `;
+
+    traceJsonEl.innerHTML = d.json;
+    traceNoteEl.textContent = d.note;
+  }
+
+  methodsEl.addEventListener('change', (e) => {
+    if (e.target.name !== 'method') return;
+    document.querySelectorAll('.method').forEach(m => m.classList.remove('selected'));
+    e.target.closest('.method').classList.add('selected');
+    renderTrace(e.target.value);
+  });
+
+  stateSelect.addEventListener('change', () => {
+    if (stateSelect.value === 'custom') {
+      stateInput.value = '';
+      stateInput.disabled = false;
+      stateInput.focus();
+    } else {
+      stateInput.value = stateSelect.value;
+      stateInput.disabled = true;
+    }
+  });
+
+  function getSelectedMethod(){
+    return document.querySelector('input[name="method"]:checked').value;
+  }
+
+  async function sendToWebhook(){
+    const url = webhookInput.value.trim();
+    const state = (stateSelect.value === 'custom' ? stateInput.value : stateSelect.value).trim();
+    const method = getSelectedMethod();
+
+    if (!url){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">No webhook URL set. Open "Webhook connection" above and paste your n8n production URL.</div>`;
+      responseMeta.textContent = '';
+      return;
+    }
+    if (!state){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">Pick or type a state first.</div>`;
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    responseBody.className = 'response-body empty';
+    responseBody.innerHTML = `<span class="spinner"></span>Waiting on the ${method} branch…`;
+    responseMeta.textContent = '';
+
+    const startedAt = performance.now();
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state, method, ts: new Date().toISOString() })
+      });
+
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      const data = await res.json().catch(async () => ({ raw: await res.text() }));
+
+      responseBody.className = 'response-body';
+      const mainText = JSON.stringify(data.records ?? data.result ?? data.raw ?? data, null, 2);
+      responseBody.textContent = mainText;
+
+      let extra = '';
+      if (data.lesson){
+        extra = `<div class="lesson-box">📎 ${data.lesson}</div>`;
+      } else if (data.warning){
+        extra = `<div class="lesson-box">⚠️ ${data.warning}</div>`;
+      }
+      responseBody.insertAdjacentHTML('afterend', extra);
+      document.querySelectorAll('.lesson-box').forEach((el, i, arr) => { if (i < arr.length - 1) el.remove(); });
+
+      responseMeta.innerHTML = `<span>Method: <b>${method}</b></span><span>Round trip: <b>${elapsedMs} ms</b></span><span>HTTP status: <b>${res.status}</b></span>`;
+
+    } catch (err){
+      responseBody.className = 'response-body';
+      responseBody.innerHTML = `<div class="error-box">Request failed: ${err.message}. Check the webhook URL and that the workflow is active (production URL, not test).</div>`;
+      responseMeta.textContent = '';
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Query data.gov.in';
+    }
+  }
+
+  sendBtn.addEventListener('click', sendToWebhook);
+
+  renderTrace('hardcoded');
+</script>
+
+</body>
+</html>
