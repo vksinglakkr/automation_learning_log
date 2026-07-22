@@ -238,6 +238,8 @@
   }
   .badge-hidden{ background:#173029; color:var(--safe); border:1px solid #285142;}
   .badge-abstracted{ background:#1c2536; color:var(--slate); border:1px solid #2c3a55;}
+  .badge-code{ background:#241c36; color:#b79cdb; border:1px solid #3a2d5c;}
+  .badge-warn{ background:#2a2213; color:var(--brass); border:1px solid #4a3a1c;}
 
   button.send{
     margin-top:18px;
@@ -312,6 +314,7 @@
   pre.trace-json .s{ color:#d0b060; }
   pre.trace-json .masked{ color:var(--danger); }
   pre.trace-json .safe-val{ color:var(--safe); }
+  pre.trace-json .exposed{ color:var(--danger); font-weight:600; }
 
   p.trace-note{
     color:var(--muted);
@@ -367,6 +370,16 @@
     font-size:13px;
     font-family: var(--mono);
   }
+  .warn-box{
+    border:1px solid #4a3a1c;
+    background:#20190f;
+    color:#e0c088;
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:12.5px;
+    font-family: var(--body);
+    margin-top:10px;
+  }
 
   footer.page{
     margin-top:56px;
@@ -392,7 +405,7 @@
     <div>
       <p class="eyebrow">Day 4 · HTTP &amp; Credentials, in depth</p>
       <h1>Gita Oracle <em>console</em></h1>
-      <p class="tagline">One question, four ways of calling Groq. Watch where the key lives in each.</p>
+      <p class="tagline">One question, seven ways of calling Groq. Watch where the key lives in each.</p>
     </div>
   </header>
 
@@ -429,9 +442,19 @@
 
       <section class="card" style="margin-top:20px;">
         <h2 class="section-title">Choose the calling pattern</h2>
-        <p class="section-sub">Four ways to reach the same model. Same question, different plumbing.</p>
+        <p class="section-sub">Seven ways to reach the same model — one of them a warning label.</p>
 
         <div class="methods" id="methods">
+
+          <label class="method" data-method="static_header">
+            <input type="radio" name="method" value="static_header">
+            <div class="method-head">
+              <span class="m-eyebrow">00</span>
+              <span class="m-title">Static key in header</span>
+              <span class="m-badge badge-warn">Anti-pattern</span>
+            </div>
+            <p class="m-desc">The key is typed directly into the node's header field — no credential at all. It works, but it's sitting in plain text in this workflow's exported JSON. Shown first so you can see exactly what "not hidden" looks like before the other six hide it properly.</p>
+          </label>
 
           <label class="method selected" data-method="agent">
             <input type="radio" name="method" value="agent" checked>
@@ -460,17 +483,37 @@
               <span class="m-title">HTTP Request + Header Auth</span>
               <span class="m-badge badge-hidden">Hidden key</span>
             </div>
-            <p class="m-desc">No dedicated credential type this time. The key lives in a Generic "Header Auth" credential — still fully hidden from the exported workflow JSON.</p>
+            <p class="m-desc">No dedicated credential type this time. The key lives in a Generic "Header Auth" credential, and you type the header name yourself — still fully hidden from the exported workflow JSON.</p>
+          </label>
+
+          <label class="method" data-method="bearer_auth">
+            <input type="radio" name="method" value="bearer_auth">
+            <div class="method-head">
+              <span class="m-eyebrow">04</span>
+              <span class="m-title">HTTP Request + Bearer Auth</span>
+              <span class="m-badge badge-hidden">Hidden key</span>
+            </div>
+            <p class="m-desc">n8n's purpose-built Bearer Auth credential — paste the raw token, n8n constructs the <code class="inline">Authorization</code> header for you. Same hiding guarantee as 03, less to configure by hand.</p>
           </label>
 
           <label class="method" data-method="header_auth_persona">
             <input type="radio" name="method" value="header_auth_persona">
             <div class="method-head">
-              <span class="m-eyebrow">04</span>
+              <span class="m-eyebrow">05</span>
               <span class="m-title">Header Auth + Gita guide persona</span>
               <span class="m-badge badge-hidden">Hidden key</span>
             </div>
             <p class="m-desc">Same hidden-key mechanism as 03, plus a hand-written system prompt. Proof that the manual route doesn't cost you customization.</p>
+          </label>
+
+          <label class="method" data-method="code_prompt">
+            <input type="radio" name="method" value="code_prompt">
+            <div class="method-head">
+              <span class="m-eyebrow">06</span>
+              <span class="m-title">Header Auth + Code-built prompt</span>
+              <span class="m-badge badge-code">Custom logic</span>
+            </div>
+            <p class="m-desc">Same hidden key as 03, but the message array is assembled in a Code node — trimmed, length-guarded, built in JavaScript instead of an inline expression.</p>
           </label>
 
         </div>
@@ -512,6 +555,23 @@
 
 <script>
   const METHOD_DATA = {
+    static_header: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Groq API — key inline'],
+      lock: {
+        cls: 'abstracted',
+        icon: '🔓',
+        title: 'Exposed — key visible in node JSON',
+        sub: 'No credential involved at all.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"static_header"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="exposed">"Bearer gsk_abc123realkeyhere"</span>
+  }
+}`,
+      note: 'The key is typed directly into the HTTP Request node\'s header field. It works exactly like method 03 or 04 — but export this workflow and hand it to anyone, and they now have your key in plain text. This is the anti-pattern the other six methods exist to avoid.'
+    },
     agent: {
       pipeline: ['Browser', 'n8n Webhook', 'AI Agent node', 'Groq Chat Model', 'Groq API'],
       lock: {
@@ -561,6 +621,23 @@
 }`,
       note: 'Groq has no dedicated n8n credential type by default for this route — so the key goes into a Generic "Header Auth" credential instead. Same hiding guarantee as method 02, just a more general mechanism you can reuse for any API.'
     },
+    bearer_auth: {
+      pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Bearer Auth credential', 'Groq API'],
+      lock: {
+        cls: 'safe',
+        icon: '🔒',
+        title: 'Hidden — dedicated generic type',
+        sub: 'Key stored in n8n\'s built-in "Bearer Auth" credential.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"bearer_auth"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  }
+}`,
+      note: 'Same hidden-key guarantee as method 03, but you never type "Authorization" or "Bearer " yourself. n8n\'s Bearer Auth credential takes just the raw token and constructs the header for you — purpose-built instead of generic.'
+    },
     header_auth_persona: {
       pipeline: ['Browser', 'n8n Webhook', 'HTTP Request node', 'Header Auth credential', 'Groq API'],
       lock: {
@@ -578,6 +655,24 @@
   <span class="k">"system_prompt"</span>: <span class="s">"You are a patient guide to the Bhagavad Gita…"</span>
 }`,
       note: 'Identical credential handling to method 03. The difference lives in the request body: a system message written into the node\'s JSON, giving the model a consistent teaching voice — nothing about hiding the key limits how you shape the call.'
+    },
+    code_prompt: {
+      pipeline: ['Browser', 'n8n Webhook', 'Code node', 'HTTP Request node', 'Header Auth credential', 'Groq API'],
+      lock: {
+        cls: 'safe',
+        icon: '🔒',
+        title: 'Hidden key + prompt built in JavaScript',
+        sub: 'Same masked key as 03, plus a Code node upstream.'
+      },
+      json: `{
+  <span class="k">"question"</span>: <span class="s">"…"</span>,
+  <span class="k">"method"</span>: <span class="s">"code_prompt"</span>,
+  <span class="k">"headers"</span>: {
+    <span class="k">"Authorization"</span>: <span class="masked">"Bearer ••••••••"</span>
+  },
+  <span class="k">"messages"</span>: <span class="safe-val">"built by Code node: trimmed, length-guarded, assembled as an array"</span>
+}`,
+      note: 'A Code node runs before the HTTP Request node — it trims the question, caps it at 500 characters, and hand-assembles the messages[] array in plain JavaScript. The HTTP node just serializes what the code already built, instead of constructing it inline.'
     }
   };
 
@@ -680,15 +775,21 @@
 
       const contentType = res.headers.get('content-type') || '';
       let text;
+      let warning = null;
       if (contentType.includes('application/json')){
         const data = await res.json();
         text = data.reply || data.answer || data.text || data.output || JSON.stringify(data, null, 2);
+        warning = data.warning || null;
       } else {
         text = await res.text();
       }
 
       responseBody.className = 'response-body';
       responseBody.textContent = text;
+      document.querySelectorAll('.warn-box').forEach(el => el.remove());
+      if (warning){
+        responseBody.insertAdjacentHTML('afterend', `<div class="warn-box">⚠️ ${warning}</div>`);
+      }
       responseMeta.innerHTML = `<span>Method: <b>${method}</b></span><span>Round trip: <b>${elapsedMs} ms</b></span>`;
 
     } catch (err){
