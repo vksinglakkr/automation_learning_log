@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Data Auth Docket — data.gov.in mechanisms</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#12181f;
+    --panel:#1c242e;
+    --panel-raised:#232d39;
+    --paper:#ede7d9;
+    --paper-dim:#b9b2a0;
+    --rule:#37414d;
+    --works:#5fa87f;
+    --works-dim:#33473b;
+    --fails:#c1443b;
+    --fails-dim:#4a2c2a;
+    --stamp:#d8a64b;
+    --focus:#7fb3d5;
+    --radius:3px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001s !important; transition-duration:0.001s !important;}
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header.masthead{
+    border-bottom:2px solid var(--stamp);
+    padding-bottom:18px;
+    margin-bottom:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  header.masthead .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--stamp);
+    margin:0 0 6px;
+  }
+  header.masthead h1{
+    font-size:26px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header.masthead .sub{
+    font-size:13px;
+    color:var(--paper-dim);
+    margin-top:6px;
+    max-width:46ch;
+  }
+  header.masthead .docket-count{
+    font-family:'IBM Plex Mono', monospace;
+    text-align:right;
+    font-size:12px;
+    color:var(--paper-dim);
+  }
+  header.masthead .docket-count strong{
+    display:block;
+    font-size:28px;
+    color:var(--paper);
+    font-weight:600;
+  }
+
+  .endpoint-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:26px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .endpoint-row label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .endpoint-row input[type=text]{
+    flex:1;
+    min-width:280px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:9px 12px;
+    border-radius:var(--radius);
+  }
+  .endpoint-row input[type=text]:focus{outline:2px solid var(--focus); outline-offset:1px;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:22px;
+  }
+  @media (max-width:820px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  .docket{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .docket .head{
+    padding:14px 16px;
+    border-bottom:1px solid var(--rule);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+  }
+  .entry{
+    display:grid;
+    grid-template-columns:34px 1fr auto;
+    align-items:center;
+    gap:12px;
+    padding:13px 16px;
+    border-bottom:1px solid var(--rule);
+    cursor:pointer;
+    transition:background 0.12s ease;
+  }
+  .entry:last-child{border-bottom:none;}
+  .entry:hover{background:var(--panel-raised);}
+  .entry.active{background:var(--panel-raised); box-shadow:inset 3px 0 0 var(--stamp);}
+  .entry input{accent-color:var(--stamp); margin:0;}
+  .entry .num{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--paper-dim);
+    font-size:13px;
+  }
+  .entry .name{font-size:14px; font-weight:500;}
+  .entry .method-key{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    margin-top:2px;
+  }
+  .verdict{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.06em;
+    padding:3px 8px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .verdict.works{background:var(--works-dim); color:var(--works);}
+  .verdict.fails{background:var(--fails-dim); color:var(--fails);}
+
+  .right-col{display:flex; flex-direction:column; gap:18px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:18px;
+  }
+  .card h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--paper-dim);
+    margin:0 0 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+  }
+
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--paper-dim);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    background:var(--ink);
+    border:1px solid var(--rule);
+    color:var(--paper);
+    font-size:14px;
+    padding:9px 11px;
+    border-radius:var(--radius);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .field input:focus{outline:2px solid var(--focus); outline-offset:1px;}
+  .field.key-field{
+    display:none;
+    border-left:2px solid var(--stamp);
+    padding-left:12px;
+  }
+  .field.key-field.show{display:block;}
+  .field .hint{font-size:11px; color:var(--paper-dim); margin-top:5px;}
+
+  button.send{
+    width:100%;
+    background:var(--stamp);
+    color:#1a1408;
+    border:none;
+    font-weight:600;
+    font-size:14px;
+    padding:12px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:transform 0.08s ease, background 0.12s ease;
+  }
+  button.send:hover{background:#e6b65a;}
+  button.send:active{transform:scale(0.99);}
+  button.send:disabled{opacity:0.5; cursor:wait;}
+
+  .inspector pre{
+    background:var(--ink);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--paper);
+    white-space:pre-wrap;
+    word-break:break-all;
+    margin:0;
+  }
+  .inspector .line{margin-bottom:2px;}
+  .inspector .tag{color:var(--stamp);}
+  .inspector .lesson{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--paper-dim);
+    border-top:1px dashed var(--rule);
+    padding-top:10px;
+  }
+
+  .response-card pre{
+    background:var(--ink);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    max-height:260px;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+    margin:0;
+    color:var(--paper);
+  }
+  .response-card .status-line{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+  }
+  .status-line .dot{width:8px; height:8px; border-radius:50%; background:var(--paper-dim);}
+  .status-line .dot.ok{background:var(--works);}
+  .status-line .dot.err{background:var(--fails);}
+  .empty-note{color:var(--paper-dim); font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">n8n auth mechanisms · non-AI</p>
+      <h1>Open Data Auth Docket</h1>
+      <p class="sub">Seven ways to send a data.gov.in API key, tried one at a time against the same census-lookup webhook.</p>
+    </div>
+    <div class="docket-count"><strong>7</strong>entries on file</div>
+  </header>
+
+  <div class="endpoint-row">
+    <label for="webhookUrl">Webhook URL</label>
+    <input type="text" id="webhookUrl" placeholder="https://your-n8n-instance/webhook/census-lookup" value="">
+  </div>
+
+  <div class="layout">
+
+    <div class="docket" role="radiogroup" aria-label="Auth method docket" id="docket"></div>
+
+    <div class="right-col">
+
+      <div class="card">
+        <h2>Query parameters</h2>
+        <div class="field">
+          <label for="stateInput">State</label>
+          <input type="text" id="stateInput" placeholder="e.g. Haryana" value="Haryana">
+        </div>
+        <div class="field key-field" id="keyField">
+          <label for="apiKeyInput">API key (typed in, not saved anywhere)</label>
+          <input type="text" id="apiKeyInput" placeholder="paste your data.gov.in key">
+          <p class="hint">Only entry 7 uses this — it proves the key still has to travel as a query parameter, just supplied at run-time instead of from a stored n8n credential.</p>
+        </div>
+        <button class="send" id="sendBtn">Send request</button>
+      </div>
+
+      <div class="card inspector">
+        <h2>Request inspector</h2>
+        <div id="inspectorBody"></div>
+      </div>
+
+      <div class="card response-card">
+        <h2>Response</h2>
+        <div id="responseBody"><p class="empty-note">Send a request to see what comes back.</p></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const METHODS = [
+  { key:'hardcoded', name:'Hardcoded key', works:true, lesson:'Key sits in plain text in the node URL — works, but it is visible to anyone who exports or views this workflow. Kept here as the cautionary entry.' },
+  { key:'query_auth', name:'Query auth credential', works:true, lesson:'Correct mechanism, key hidden behind a saved n8n Query Auth credential.' },
+  { key:'header_auth', name:'Header auth credential', works:false, lesson:'data.gov.in ignores custom headers entirely — the key must ride in the URL, not a header.' },
+  { key:'bearer_auth', name:'Bearer token', works:false, lesson:'Authorization: Bearer works for Groq or OpenAI but data.gov.in never reads it. Auth conventions are not universal.' },
+  { key:'code_query', name:'Code-built query', works:true, lesson:'The Code node sanitises and encodes the state filter, then builds the full query string before the HTTP node runs.' },
+  { key:'config_abstraction', name:'Config-driven request', works:true, lesson:'Resource ID and limit come from a Set node upstream, so the same HTTP node can be reused for other datasets.' },
+  { key:'static_query', name:'Typed-in static key', works:true, lesson:'Key still travels as a query parameter — the only difference is it came from this form at request-time, not a stored credential.' }
+];
+
+let selected = 'query_auth';
+
+function renderDocket(){
+  const docket = document.getElementById('docket');
+  docket.innerHTML = '<div class="head">Select an entry to test</div>' +
+    METHODS.map((m, i) => `
+      <label class="entry ${m.key===selected ? 'active' : ''}" data-key="${m.key}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span>
+          <span class="name">${m.name}</span>
+          <span class="method-key">${m.key}</span>
+        </span>
+        <span class="verdict ${m.works ? 'works' : 'fails'}">${m.works ? 'WORKS' : 'FAILS'}</span>
+      </label>
+    `).join('');
+
+  docket.querySelectorAll('.entry').forEach(el => {
+    el.addEventListener('click', () => {
+      selected = el.dataset.key;
+      renderDocket();
+      renderInspector();
+    });
+  });
+}
+
+function currentMethod(){
+  return METHODS.find(m => m.key === selected);
+}
+
+function renderInspector(){
+  const m = currentMethod();
+  const state = document.getElementById('stateInput').value || '{state}';
+  const key = document.getElementById('apiKeyInput').value;
+  const keyField = document.getElementById('keyField');
+  keyField.classList.toggle('show', selected === 'static_query');
+
+  let authLine;
+  if (selected === 'hardcoded') authLine = 'api-key=<span class="tag">PASTE_YOUR_RAW_KEY_HERE</span> (literal, in the URL)';
+  else if (selected === 'query_auth' || selected === 'code_query' || selected === 'config_abstraction') authLine = 'api-key=<span class="tag">from saved Query Auth credential</span>';
+  else if (selected === 'header_auth') authLine = 'header <span class="tag">custom-header: &lt;key&gt;</span> (server ignores it)';
+  else if (selected === 'bearer_auth') authLine = 'header <span class="tag">Authorization: Bearer &lt;key&gt;</span> (server ignores it)';
+  else authLine = `api-key=<span class="tag">${key ? key.slice(0,4)+'…' : '(enter a key on the left)'}</span> (typed in this form)`;
+
+  document.getElementById('inspectorBody').innerHTML = `
+    <div class="line">POST <span class="tag">census-lookup</span></div>
+    <pre>{ "method": "${selected}", "state": "${state}"${selected==='static_query' ? ', "apiKey": "'+(key||'…')+'"' : ''} }</pre>
+    <div class="line">GET https://api.data.gov.in/resource/YOUR_RESOURCE_ID?…</div>
+    <div class="line">Auth: ${authLine}</div>
+    <div class="lesson">${m.lesson}</div>
+  `;
+}
+
+document.getElementById('stateInput').addEventListener('input', renderInspector);
+document.getElementById('apiKeyInput').addEventListener('input', renderInspector);
+
+document.getElementById('sendBtn').addEventListener('click', async () => {
+  const url = document.getElementById('webhookUrl').value.trim();
+  const responseBody = document.getElementById('responseBody');
+  const btn = document.getElementById('sendBtn');
+
+  if (!url){
+    responseBody.innerHTML = '<p class="empty-note">Paste your n8n webhook URL above first.</p>';
+    return;
+  }
+
+  const payload = {
+    method: selected,
+    state: document.getElementById('stateInput').value || 'Haryana'
+  };
+  if (selected === 'static_query'){
+    payload.apiKey = document.getElementById('apiKeyInput').value.trim();
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  responseBody.innerHTML = '<p class="empty-note">Waiting on the workflow…</p>';
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    let pretty = text;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch(e) {}
+
+    responseBody.innerHTML = `
+      <div class="status-line">
+        <span class="dot ${res.ok ? 'ok' : 'err'}"></span>
+        <span>HTTP ${res.status}</span>
+      </div>
+      <pre>${pretty.replace(/</g,'&lt;')}</pre>
+    `;
+  } catch (err) {
+    responseBody.innerHTML = `
+      <div class="status-line"><span class="dot err"></span><span>Request failed</span></div>
+      <pre>${String(err).replace(/</g,'&lt;')}</pre>
+    `;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send request';
+  }
+});
+
+renderDocket();
+renderInspector();
+</script>
+</body>
+</html>
