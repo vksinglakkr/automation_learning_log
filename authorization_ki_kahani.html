@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authorization ki Kahani — Header, Bearer aur API Key</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Hind:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#fbf8f0;
+    --rule:#c7d4e8;
+    --margin-red:#c0453e;
+    --ink:#1f2937;
+    --ink-soft:#4b5768;
+    --board:#1e4d3a;
+    --board-chalk:#f4efdc;
+    --board-chalk-dim:#cfe6d6;
+    --yellow-chalk:#e8c14a;
+    --correct:#2f7d5c;
+    --wrong:#c0453e;
+    --highlight:#fde9b0;
+    --tape:#e8c14a;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#e9e2d0;
+    font-family:'Hind', system-ui, sans-serif;
+    color:var(--ink);
+    line-height:1.7;
+    padding:0 0 70px;
+  }
+
+  h1,h2,h3,.hand{font-family:'Baloo 2', 'Hind', sans-serif;}
+
+  code, .mono{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.92em;
+  }
+
+  /* ============ MASTHEAD (blackboard) ============ */
+  .board{
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.03), transparent 60%),
+      var(--board);
+    color:var(--board-chalk);
+    padding:44px 20px 50px;
+    text-align:center;
+    border-bottom:10px solid #8a5a2b;
+  }
+  .board .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--yellow-chalk);
+    margin:0 0 14px;
+  }
+  .board h1{
+    font-size:clamp(26px, 5vw, 42px);
+    margin:0 0 12px;
+    font-weight:700;
+    text-shadow:0 0 1px rgba(244,239,220,0.4);
+  }
+  .board .hi{display:block;}
+  .board .en{
+    display:block;
+    font-size:0.52em;
+    color:var(--board-chalk-dim);
+    font-family:'Hind', sans-serif;
+    font-weight:500;
+    margin-top:6px;
+  }
+  .board p.tagline{
+    max-width:560px;
+    margin:0 auto;
+    color:var(--board-chalk-dim);
+    font-size:15px;
+  }
+
+  /* ============ NOTEBOOK PAGE ============ */
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    background:
+      repeating-linear-gradient(
+        var(--paper),
+        var(--paper) 33px,
+        var(--rule) 34px
+      );
+    background-color:var(--paper);
+    border-left:3px solid var(--margin-red);
+    padding:40px 34px 40px 54px;
+    position:relative;
+    box-shadow:0 10px 40px rgba(0,0,0,0.18);
+  }
+  .page::before{
+    content:"";
+    position:absolute;
+    left:34px;
+    top:0;
+    bottom:0;
+    width:1px;
+    background:rgba(192,69,62,0.25);
+  }
+
+  section{margin-bottom:38px;}
+  section:last-child{margin-bottom:0;}
+
+  .chapter-tag{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:#fff;
+    background:var(--margin-red);
+    padding:3px 10px;
+    border-radius:2px;
+    margin-bottom:10px;
+    transform:rotate(-1deg);
+  }
+  h2{
+    font-size:22px;
+    color:var(--ink);
+    margin:0 0 6px;
+  }
+  h2 .en-sub{
+    display:block;
+    font-family:'Hind', sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  h3{
+    font-size:16px;
+    color:var(--margin-red);
+    margin:22px 0 8px;
+  }
+
+  p{margin:0 0 14px; font-size:15.5px;}
+  .story{
+    background:var(--highlight);
+    border-radius:2px;
+    padding:14px 16px;
+    margin:0 0 16px;
+    font-size:15px;
+    position:relative;
+  }
+  .story::before{
+    content:"✎ Kahani";
+    position:absolute;
+    top:-11px;
+    left:12px;
+    background:var(--tape);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    padding:1px 8px;
+    border-radius:2px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+
+  ul, ol{margin:0 0 16px; padding-left:22px;}
+  li{margin-bottom:8px; font-size:15px;}
+
+  .keyword{
+    font-weight:600;
+    color:var(--margin-red);
+  }
+
+  /* SVG figure wrapper */
+  figure{margin:20px 0; text-align:center;}
+  figure svg{max-width:100%; height:auto;}
+  figcaption{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+
+  /* Comparison table */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:16px 0;
+    font-size:14px;
+    background:#fff;
+  }
+  th, td{
+    border:1px solid #d8d0bd;
+    padding:9px 10px;
+    text-align:left;
+    vertical-align:top;
+  }
+  th{
+    background:var(--board);
+    color:var(--board-chalk);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  td.yes{color:var(--correct); font-weight:600;}
+  td.no{color:var(--wrong); font-weight:600;}
+  tr:nth-child(even) td{background:#f7f2e6;}
+
+  .pill{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    font-weight:600;
+  }
+  .pill.works{background:#e0f0e6; color:var(--correct);}
+  .pill.fails{background:#fbe4e2; color:var(--wrong);}
+
+  /* Checklist card */
+  .checklist{
+    background:#fff;
+    border:1px dashed var(--margin-red);
+    border-radius:4px;
+    padding:16px 18px;
+  }
+  .checklist li{list-style:none; margin-bottom:12px; padding-left:0;}
+  .checklist li::before{
+    content:"☐ ";
+    color:var(--margin-red);
+    font-weight:700;
+  }
+  .checklist .q{font-weight:600; display:block; margin-bottom:2px;}
+  .checklist .q-en{color:var(--ink-soft); font-size:13px;}
+
+  /* Recap board at end */
+  .recap{
+    background:var(--board);
+    color:var(--board-chalk);
+    border-radius:6px;
+    padding:24px 22px;
+    margin-top:10px;
+  }
+  .recap h3{color:var(--yellow-chalk); margin-top:0;}
+  .recap dl{margin:0;}
+  .recap dt{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--yellow-chalk);
+    font-weight:600;
+    margin-top:14px;
+    font-size:14px;
+  }
+  .recap dd{margin:4px 0 0; color:var(--board-chalk-dim); font-size:14px;}
+
+  .footer-note{
+    text-align:center;
+    font-size:12.5px;
+    color:#7a715c;
+    padding:26px 20px 0;
+    max-width:600px;
+    margin:0 auto;
+  }
+
+  @media (max-width:600px){
+    .page{padding:30px 18px 30px 34px;}
+    .page::before{left:14px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <p class="eyebrow">Automation Learning Log · Ek Chhoti Si Class</p>
+  <h1>
+    <span class="hi">Authorization ki Kahani</span>
+    <span class="en">Header, Bearer aur API Key — asal me farak kya hai?</span>
+  </h1>
+  <p class="tagline">Na koi PhD wali bhasha, na koi jaldi. Bas ek kahani, kuch tasveerein, aur end tak tum khud decide kar paoge ki kisi bhi naye API me apni key kahan likhni hai.</p>
+</div>
+
+<div class="page">
+
+  <section>
+    <span class="chapter-tag">Chapter 1</span>
+    <h2>Parcel wali kahani<span class="en-sub">The parcel story — jahan se sab shuru hota hai</span></h2>
+
+    <div class="story">
+      <p><strong>Raju</strong> Kurukshetra ke post office se ek parcel Delhi bhejna chahta hai. Us parcel ke saath teen tarah ki jagah hoti hain jahan wo cheezein likh sakta hai:</p>
+      <ol>
+        <li><strong>Bahar ka address label</strong> — sabko dikhta hai, koi bhi padh sakta hai. (Yeh URL / query parameter jaisa hai.)</li>
+        <li><strong>Ek chhota sila hua envelope, parcel ke upar staple kiya hua</strong> — isme alag-alag khaane (boxes) bane hote hain jaise "Prapak" (To), "Preshak" (From), "Anumati Patra" (Authorization Slip). Postman inhi khaano ko dekhta hai. (Yeh HTTP <em>headers</em> jaisa hai.)</li>
+        <li><strong>Parcel ke andar ka asli saaman</strong> — jo cheez actually bhej rahe hain. (Yeh request <em>body</em> jaisa hai.)</li>
+      </ol>
+      <p>Server (jaise data.gov.in ya Groq ka server) bhi bilkul isi tarah kaam karta hai — jab tumhara code koi request bhejta hai, usme ye teeno jagah maujood hoti hain, aur <strong>har company khud decide karti hai ki wo apni "chaabi" (key) kahan dhoondegi.</strong></p>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- parcel body -->
+        <rect x="60" y="60" width="520" height="160" rx="6" fill="#f3e6c8" stroke="#8a5a2b" stroke-width="3"/>
+        <line x1="60" y1="60" x2="580" y2="220" stroke="#c9a86a" stroke-width="1.5"/>
+        <line x1="580" y1="60" x2="60" y2="220" stroke="#c9a86a" stroke-width="1.5"/>
+
+        <!-- address label (query param) -->
+        <rect x="80" y="80" width="150" height="70" rx="3" fill="#fff" stroke="#c0453e" stroke-width="2"/>
+        <text x="155" y="102" font-family="JetBrains Mono, monospace" font-size="11" fill="#c0453e" text-anchor="middle" font-weight="600">?api-key=xyz</text>
+        <text x="155" y="120" font-family="Hind, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">Address Label</text>
+        <text x="155" y="136" font-family="Hind, sans-serif" font-size="10.5" fill="#4b5768" text-anchor="middle">(URL / Query Param)</text>
+        <text x="155" y="148" font-family="Hind, sans-serif" font-size="9.5" fill="#c0453e" text-anchor="middle">sabko dikhta hai</text>
+
+        <!-- staple envelope (headers) -->
+        <rect x="245" y="72" width="150" height="86" rx="3" fill="#fdf6e3" stroke="#2f7d5c" stroke-width="2"/>
+        <text x="320" y="92" font-family="JetBrains Mono, monospace" font-size="11" fill="#2f7d5c" text-anchor="middle" font-weight="600">Authorization:</text>
+        <text x="320" y="106" font-family="JetBrains Mono, monospace" font-size="10.5" fill="#2f7d5c" text-anchor="middle">Bearer abc123</text>
+        <text x="320" y="126" font-family="Hind, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">Stapled Envelope</text>
+        <text x="320" y="142" font-family="Hind, sans-serif" font-size="10.5" fill="#4b5768" text-anchor="middle">(HTTP Headers)</text>
+        <text x="320" y="153" font-family="Hind, sans-serif" font-size="9.5" fill="#2f7d5c" text-anchor="middle">alag khaano me likha</text>
+
+        <!-- body -->
+        <rect x="410" y="80" width="150" height="70" rx="3" fill="#fff" stroke="#8a5a2b" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="485" y="105" font-family="Hind, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">Andar ka Saaman</text>
+        <text x="485" y="122" font-family="Hind, sans-serif" font-size="10.5" fill="#4b5768" text-anchor="middle">(Request Body)</text>
+        <text x="485" y="138" font-family="Hind, sans-serif" font-size="9.5" fill="#8a5a2b" text-anchor="middle">asli data yahan</text>
+
+        <text x="320" y="245" font-family="Baloo 2, sans-serif" font-size="15" fill="#1f2937" text-anchor="middle" font-weight="600">Ek Parcel = Ek HTTP Request</text>
+      </svg>
+      <figcaption>Teen jagah, teen kaam — server decide karta hai kaunsi jagah use hogi.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <span class="chapter-tag">Chapter 2</span>
+    <h2>"Authorization" hi kyun likhte hain?<span class="en-sub">Kya koi aur naam likh sakte hain?</span></h2>
+
+    <p>Yeh sabse zyada confuse karne wala sawal hai — <strong>haan, bilkul kisi bhi naam ka apna khaana (custom header) bana sakte ho.</strong> HTTP tumhe rokta nahi. Tum chahte to likh sakte the:</p>
+    <ul>
+      <li><code>x-api-key: abc123</code></li>
+      <li><code>apikey: abc123</code></li>
+      <li><code>meri-chaabi: abc123</code> (bilkul, koi bhi naam)</li>
+    </ul>
+    <p>Lekin <span class="keyword">"Authorization"</span> ek <strong>pehle se tay (reserved / standard) naam hai</strong> — jaise sarkari form me pehle se chhape hue khaane hote hain "Naam", "Pita ka Naam", "Pata". Har server, browser, security tool — sabko pata hai ki agar kisi request me permission ka proof dhoondhna hai, to pehle <code>Authorization</code> naam ka khaana check karo. Isliye zyadatar companies (Groq, OpenAI, GitHub, bank APIs) yehi standard naam use karti hain.</p>
+
+    <div class="story">
+      <p>Par yaad hai humara <strong>data.gov.in</strong> wala project? Wahan hum <code>Authorization</code> header bhejte hain — aur server use <em>bilkul ignore</em> kar deta hai! Kyunki data.gov.in ke engineers ne apna server aisa banaya hi nahi ki wo header dekhe. Unhone decide kiya ki key sirf address label (query parameter) me hi likhi jaani chahiye: <code>?api-key=abc123</code>. Yehi wajah hai ki humare workflow me <code>header_auth</code> aur <code>bearer_auth</code> branch <span class="pill fails">FAILS</span> hoti hain — sahi jagah likha hi nahi, isliye rejected.</p>
+    </div>
+
+    <table>
+      <tr><th>Naam kaha likha</th><th>Kya likhte hain</th><th>Kaun use karta hai (example)</th></tr>
+      <tr><td>Header: <code>Authorization</code></td><td><code>Bearer &lt;key&gt;</code></td><td>Groq, OpenAI, GitHub</td></tr>
+      <tr><td>Header: custom naam</td><td>sirf <code>&lt;key&gt;</code>, koi scheme word nahi</td><td>Kai payment / SaaS APIs, e.g. <code>x-api-key</code></td></tr>
+      <tr><td>URL: query parameter</td><td><code>?api-key=&lt;key&gt;</code></td><td>data.gov.in</td></tr>
+    </table>
+
+    <p><strong>Golden rule:</strong> jo company API bana rahi hai, <em>wahi</em> decide karti hai key kahan dhoondhi jaayegi. Hum sirf unke documentation me likha hua follow karte hain — guess nahi karte.</p>
+  </section>
+
+  <section>
+    <span class="chapter-tag">Chapter 3</span>
+    <h2>"Bearer" kya hota hai?<span class="en-sub">Yeh header ke andar kyun likha jaata hai?</span></h2>
+
+    <div class="story">
+      <p>Socho tumhare paas bus ka ticket hai. Conductor ye nahi poochta "tumhara ID card dikhao" — wo bas ye dekhta hai ki <strong>tumhare paas ticket hai ya nahi.</strong> Jiske paas ticket hai, wahi safar kar sakta hai — chahe wo kisi ne bhi diya ho. Isko English me kehte hain: <span class="keyword">"bearer"</span> — matlab "leke chalne wala / dikhane wala".</p>
+      <p>Bilkul waise hi, <code>Authorization: Bearer abc123</code> ka matlab hai: "Jo bhi ye <code>abc123</code> chit (token) leke aaya hai, use andar aane do — extra check ki zaroorat nahi."</p>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 560 190" xmlns="http://www.w3.org/2000/svg">
+        <rect x="30" y="50" width="220" height="90" rx="10" fill="#fdf6e3" stroke="#2f7d5c" stroke-width="2.5"/>
+        <text x="140" y="80" font-family="Baloo 2, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="600">Bus Ticket</text>
+        <text x="140" y="100" font-family="Hind, sans-serif" font-size="11.5" fill="#4b5768" text-anchor="middle">Jiske paas ye hai,</text>
+        <text x="140" y="116" font-family="Hind, sans-serif" font-size="11.5" fill="#4b5768" text-anchor="middle">wahi safar kar sakta hai</text>
+
+        <text x="290" y="100" font-family="JetBrains Mono, monospace" font-size="22" fill="#c0453e" text-anchor="middle">=</text>
+
+        <rect x="330" y="50" width="220" height="90" rx="10" fill="#fdf6e3" stroke="#2f7d5c" stroke-width="2.5"/>
+        <text x="440" y="80" font-family="JetBrains Mono, monospace" font-size="12" fill="#2f7d5c" text-anchor="middle" font-weight="600">Authorization:</text>
+        <text x="440" y="98" font-family="JetBrains Mono, monospace" font-size="12" fill="#2f7d5c" text-anchor="middle" font-weight="600">Bearer abc123</text>
+        <text x="440" y="120" font-family="Hind, sans-serif" font-size="11" fill="#4b5768" text-anchor="middle">jiske paas token hai,</text>
+        <text x="440" y="134" font-family="Hind, sans-serif" font-size="11" fill="#4b5768" text-anchor="middle">wahi allowed hai</text>
+      </svg>
+      <figcaption>"Bearer" = leke chalne wala. Ticket jaisa hi socho.</figcaption>
+    </figure>
+
+    <p><code>Authorization</code> header ke andar aksar <strong>do tukde</strong> hote hain: pehla <span class="keyword">scheme word</span> (yeh bataata hai key ko kaise padhna hai), aur doosra <span class="keyword">asli key/token</span>.</p>
+
+    <table>
+      <tr><th>Scheme word</th><th>Matlab</th><th>Example</th></tr>
+      <tr><td><code>Bearer</code></td><td>bas token dikhao, koi extra check nahi</td><td><code>Authorization: Bearer sk-abc123</code></td></tr>
+      <tr><td><code>Basic</code></td><td>username:password ko base64 karke bhejna</td><td><code>Authorization: Basic dXNlcjpwYXNz</code></td></tr>
+      <tr><td><em>(kuch nahi)</em></td><td>seedha raw key, koi scheme word nahi</td><td><code>x-api-key: abc123</code></td></tr>
+    </table>
+
+    <p>Har API alag choose karti hai — <strong>koi universal rule nahi hai</strong> ki hamesha "Bearer" likhna hi hoga. Isiliye har baar naye API ke documentation page par jaake dekhna padta hai.</p>
+  </section>
+
+  <section>
+    <span class="chapter-tag">Chapter 4</span>
+    <h2>Apne hi project se seekho<span class="en-sub">Humara Data.gov.in Explorer workflow — saat tareeke, ek jagah</span></h2>
+
+    <table>
+      <tr><th>#</th><th>Tareeka</th><th>Kaam karta hai?</th><th>Kyun</th></tr>
+      <tr><td>1</td><td>Hardcoded key seedhe URL me</td><td class="yes">✅ Haan</td><td>par sabko dikh jaati hai — insecure</td></tr>
+      <tr><td>2</td><td>Query Auth credential</td><td class="yes">✅ Haan</td><td>sahi jagah (URL) + chhupi hui</td></tr>
+      <tr><td>3</td><td>Header Auth credential</td><td class="no">❌ Nahi</td><td>data.gov.in header hi nahi padhta</td></tr>
+      <tr><td>4</td><td>Bearer token</td><td class="no">❌ Nahi</td><td>Bearer to Groq/OpenAI ke liye hai, iske liye nahi</td></tr>
+      <tr><td>5</td><td>Code se query banayi</td><td class="yes">✅ Haan</td><td>bas likhne ka tareeka alag hai</td></tr>
+      <tr><td>6</td><td>Config-driven (Set node se)</td><td class="yes">✅ Haan</td><td>reusable banane ka tareeka</td></tr>
+      <tr><td>7</td><td>Static key, form se type karke</td><td class="yes">✅ Haan</td><td>fir bhi query param me hi jaati hai</td></tr>
+    </table>
+
+    <p>Dekha? <strong>Panch tareeke kaam karte hain, do fail hote hain</strong> — aur farak sirf itna hai ki key <em>kahan</em> likhi gayi. Isiliye ye workflow jaan-boojh kar galat tareeke bhi rakhta hai — taaki tum khud apni aankhon se fail hote dekh sako, sirf rat-t na lo.</p>
+  </section>
+
+  <section>
+    <span class="chapter-tag">Chapter 5</span>
+    <h2>Koi bhi naya API mile to...<span class="en-sub">5 sawal jo hamesha poochne hain</span></h2>
+
+    <div class="checklist">
+      <ul>
+        <li><span class="q">1. Key kahan jaati hai — URL me, header me, ya body me?</span><span class="q-en">Where does the key go?</span></li>
+        <li><span class="q">2. Agar header me, header ka naam kya hai — <code>Authorization</code> ya kuch custom?</span><span class="q-en">If header, which header name exactly?</span></li>
+        <li><span class="q">3. Agar <code>Authorization</code> hai, to koi scheme word (<code>Bearer</code> / <code>Basic</code>) chahiye ya sirf raw key?</span><span class="q-en">Does it need a scheme word before the key?</span></li>
+        <li><span class="q">4. Key ka format kya hai — plain text, base64, ya JWT jaisa token?</span><span class="q-en">What format is the key in?</span></li>
+        <li><span class="q">5. Kya har request ke saath key bhejni hai, ya sirf ek baar login karke session milta hai?</span><span class="q-en">Sent every time, or only once at login?</span></li>
+      </ul>
+    </div>
+    <p>Yeh paanch sawal poochoge to koi bhi naya API — chahe Groq ho, chahe koi government portal, chahe koi payment gateway — sabme apni key sahi jagah laga paoge, bina kisi ki madad ke.</p>
+  </section>
+
+  <div class="recap">
+    <h3>Blackboard Recap</h3>
+    <dl>
+      <dt>Header</dt>
+      <dd>Request ke saath jud'a chhota label/khaana, jisme extra jaankari likhi jaati hai — jaise parcel par staple kiya hua envelope.</dd>
+      <dt>Authorization (header ka naam)</dt>
+      <dd>Ek standard, sabko-pata naam jisme permission ka proof likha jaata hai. Chahe to koi aur naam bhi bana sakte ho, par ye sabse common hai.</dd>
+      <dt>Bearer (scheme word)</dt>
+      <dd>Authorization header ki value ke andar likha jaane wala shabd — matlab "jiske paas ye token hai, wahi allowed hai", bus-ticket jaisa.</dd>
+      <dt>API Key</dt>
+      <dd>Asli chaabi/token jo tumhe pehchaanti hai. Ye kahin bhi ja sakti hai — URL me, header me, ya body me — depends sirf us API par.</dd>
+      <dt>Query Parameter</dt>
+      <dd>URL ke andar <code>?key=value</code> jaisa likha hua data — sabko dikhta hai, jaise parcel ka bahar wala address label.</dd>
+    </dl>
+  </div>
+
+</div>
+
+<p class="footer-note">Automation Learning Log · seekhne ka maksad sirf itna: koi bhi naya API dekhkar dar mat jao, ye paanch sawal poochho aur khud pata laga lo.</p>
+
+</body>
+</html>
