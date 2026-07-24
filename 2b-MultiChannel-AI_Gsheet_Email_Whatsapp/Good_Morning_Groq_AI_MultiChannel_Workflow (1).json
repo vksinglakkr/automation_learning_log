@@ -1,0 +1,233 @@
+{
+  "name": "Good Morning - Groq AI Story to Sheet + Gmail + WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "1a111111-1111-1111-1111-111111111111",
+      "name": "Schedule Trigger (7 AM Daily)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1111111-1111-1111-1111-111111111111",
+              "name": "message",
+              "type": "string",
+              "value": "Good Morning! ☀️ Have a wonderful day ahead."
+            },
+            {
+              "id": "b2222222-2222-2222-2222-222222222222",
+              "name": "date",
+              "type": "string",
+              "value": "={{$now.format('yyyy-MM-dd')}}"
+            },
+            {
+              "id": "b3333333-3333-3333-3333-333333333333",
+              "name": "time",
+              "type": "string",
+              "value": "={{$now.format('HH:mm:ss')}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2a222222-2222-2222-2222-222222222222",
+      "name": "Set Good Morning Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: [ { role: \"system\", content: \"You are a warm, uplifting writer. Turn the given greeting into a short motivational story of 40 to 60 words. Keep it simple, positive, and easy to read.\" }, { role: \"user\", content: $json.message } ], max_tokens: 150 }) }}",
+        "options": {}
+      },
+      "id": "4a444444-4444-4444-4444-444444444444",
+      "name": "Generate Motivational Story (Groq AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        380
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "PASTE_YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{$('Set Good Morning Message').item.json.date}}",
+            "Time": "={{$('Set Good Morning Message').item.json.time}}",
+            "Message": "={{$json.choices[0].message.content}}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "3a333333-3333-3333-3333-333333333333",
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        180
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "PASTE_YOUR_FRIEND_EMAIL_HERE@example.com",
+        "subject": "={{'Good Morning! - ' + $('Set Good Morning Message').item.json.date}}",
+        "emailType": "text",
+        "message": "={{$json.choices[0].message.content}}",
+        "options": {}
+      },
+      "id": "5a555555-5555-5555-5555-555555555555",
+      "name": "Send Gmail to Friend",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        380
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "sms",
+        "operation": "send",
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+91PASTE_YOUR_FRIEND_NUMBER_HERE",
+        "message": "={{$json.choices[0].message.content}}",
+        "options": {}
+      },
+      "id": "6a666666-6666-6666-6666-666666666666",
+      "name": "Send WhatsApp (Twilio)",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        880,
+        580
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "REPLACE_WITH_YOUR_TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (7 AM Daily)": {
+      "main": [
+        [
+          {
+            "node": "Set Good Morning Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Good Morning Message": {
+      "main": [
+        [
+          {
+            "node": "Generate Motivational Story (Groq AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Motivational Story (Groq AI)": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Gmail to Friend",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send WhatsApp (Twilio)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
