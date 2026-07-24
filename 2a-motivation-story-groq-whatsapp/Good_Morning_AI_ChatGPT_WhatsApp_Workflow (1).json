@@ -1,0 +1,160 @@
+{
+  "name": "Good Morning - AI Motivational Story (ChatGPT) to WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "1a111111-1111-1111-1111-111111111111",
+      "name": "Schedule Trigger (7 AM Daily)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1111111-1111-1111-1111-111111111111",
+              "name": "message",
+              "type": "string",
+              "value": "Good Morning! ☀️ Have a wonderful day ahead."
+            },
+            {
+              "id": "b2222222-2222-2222-2222-222222222222",
+              "name": "date",
+              "type": "string",
+              "value": "={{$now.format('yyyy-MM-dd')}}"
+            },
+            {
+              "id": "b3333333-3333-3333-3333-333333333333",
+              "name": "time",
+              "type": "string",
+              "value": "={{$now.format('HH:mm:ss')}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2a222222-2222-2222-2222-222222222222",
+      "name": "Set Good Morning Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o-mini\", messages: [ { role: \"system\", content: \"You are a warm, uplifting writer. Turn the given greeting into a short motivational story of 40 to 60 words. Keep it simple, positive, and easy to read.\" }, { role: \"user\", content: $json.message } ], max_tokens: 150 }) }}",
+        "options": {}
+      },
+      "id": "4a444444-4444-4444-4444-444444444444",
+      "name": "Generate Motivational Story (ChatGPT)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "sms",
+        "operation": "send",
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+91PASTE_YOUR_FRIEND_NUMBER_HERE",
+        "message": "={{$json.choices[0].message.content}}",
+        "options": {}
+      },
+      "id": "3a333333-3333-3333-3333-333333333333",
+      "name": "Send WhatsApp (Twilio)",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        880,
+        300
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "REPLACE_WITH_YOUR_TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (7 AM Daily)": {
+      "main": [
+        [
+          {
+            "node": "Set Good Morning Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Good Morning Message": {
+      "main": [
+        [
+          {
+            "node": "Generate Motivational Story (ChatGPT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Motivational Story (ChatGPT)": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp (Twilio)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
