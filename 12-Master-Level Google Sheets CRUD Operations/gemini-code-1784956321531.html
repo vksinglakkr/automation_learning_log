@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKR Operations — Google Sheets CRUD Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #12141C; --panel: #1A1D29; --line: #2E3247;
+    --parchment: #EDE8DC; --muted: #8B8FA3; --blue: #5A92C6;
+    --saffron: #D48A2E; --danger: #C4634B;
+    --display: 'Fraunces', serif; --body: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  }
+  body { margin:0; background:var(--ink); color:var(--parchment); font-family:var(--body); line-height:1.5; padding: 40px 24px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { font-family:var(--display); font-size: 36px; margin:0; color:var(--blue); }
+  h1 em { font-style:italic; color:var(--saffron); font-weight:400; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+  label { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom: 6px; text-transform:uppercase; letter-spacing:1px; }
+  input, select { width:100%; background:#12141C; border:1px solid var(--line); border-radius:6px; color:var(--parchment); font-family:var(--body); font-size:14px; padding:10px; margin-bottom: 16px; box-sizing:border-box; }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  button { width:100%; background:var(--blue); color:#12141C; border:none; border-radius: 6px; padding: 12px; font-weight:600; font-size:15px; cursor:pointer; font-family:var(--body); }
+  button:hover { filter:brightness(1.1); }
+  .response-box { background:#0e1019; border:1px solid var(--line); border-radius:8px; padding:16px; font-family:var(--mono); font-size:13px; min-height: 80px; white-space: pre-wrap;}
+  .success { color: #5FA37E; }
+  .error { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>KKR Tour Guide <em>Database Operations</em></h1>
+    <p style="color:var(--muted); margin-top:8px;">Test Google Sheets CRUD Operations (Create, Update Date, Delete Booking).</p>
+  </header>
+
+  <div class="card">
+    <label>1. n8n Webhook URL</label>
+    <input type="url" id="webhookUrl" placeholder="https://your-instance.n8n.cloud/webhook/sheets-crud-api">
+    
+    <label>2. Choose Action (Operation)</label>
+    <select id="action">
+      <option value="insert">1. Insert New Booking (Create)</option>
+      <option value="update">2. Reschedule Tour Date (Update)</option>
+      <option value="delete">3. Cancel Booking (Delete Row)</option>
+    </select>
+
+    <div class="grid-2">
+      <div>
+        <label>Ticket ID</label>
+        <input type="text" id="ticketId" value="KKR-TICK-801">
+      </div>
+      <div>
+        <label>Tourist Name</label>
+        <input type="text" id="name" value="Rahul Sharma">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label>Phone Number</label>
+        <input type="text" id="phone" value="+91 9876543210">
+      </div>
+      <div>
+        <label>Tour Date</label>
+        <input type="text" id="tourDate" value="2026-08-15">
+      </div>
+    </div>
+
+    <button id="sendBtn">Execute Operation in Google Sheet</button>
+  </div>
+
+  <div class="card">
+    <label>System Trace & Response</label>
+    <div id="response" class="response-box" style="color:var(--muted);">Select an action and press Execute...</div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('action').addEventListener('change', function(e) {
+    const act = e.target.value;
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+    
+    if (act === 'update') {
+      nameInput.disabled = true; phoneInput.disabled = true;
+      document.getElementById('tourDate').value = "2026-08-16 (Rescheduled)";
+    } else if (act === 'delete') {
+      nameInput.disabled = true; phoneInput.disabled = true;
+      document.getElementById('tourDate').disabled = true;
+    } else {
+      nameInput.disabled = false; phoneInput.disabled = false;
+      document.getElementById('tourDate').disabled = false;
+    }
+  });
+
+  document.getElementById('sendBtn').addEventListener('click', async function() {
+    const url = document.getElementById('webhookUrl').value.trim();
+    const action = document.getElementById('action').value;
+    const ticket_id = document.getElementById('ticketId').value;
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
+    const tour_date = document.getElementById('tourDate').value;
+    const resBox = document.getElementById('response');
+
+    if (!url) { resBox.innerHTML = "<span class='error'>Please enter your n8n Webhook URL first.</span>"; return; }
+    
+    resBox.innerHTML = "Communicating with Google Sheets Node...";
+    this.disabled = true;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ticket_id, name, phone, tour_date })
+      });
+      const data = await response.json();
+      
+      resBox.innerHTML = `<span class='success'>[SUCCESS]</span> Action Executed: ${data.action.toUpperCase()}\nTicket ID: ${data.ticket_id}\nMessage: ${data.message}`;
+    } catch (err) {
+      resBox.innerHTML = `<span class='error'>Error: Execution failed. Check Webhook URL or n8n workflow activation.</span>`;
+    } finally {
+      this.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

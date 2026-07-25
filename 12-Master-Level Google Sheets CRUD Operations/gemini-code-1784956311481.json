@@ -1,0 +1,173 @@
+{
+  "name": "11-Google-Sheets-CRUD-Mastery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sheets-crud-api",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Portal Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "content": "## 📘 Google Sheets CRUD Operations\n\n**Goal:** Master Create, Read/Lookup, Update, and Delete in Google Sheets.\n\n**Incoming Payload:**\n- `action`: \"insert\" | \"update\" | \"delete\" | \"lookup\"\n- `ticket_id`: string\n- `name`, `phone`, `tour_date`: strings (for insert/update)",
+        "height": 220,
+        "width": 460,
+        "color": 6
+      },
+      "id": "2",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 40 ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.action }}", "rightValue": "insert", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.action }}", "rightValue": "update", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.body.action }}", "rightValue": "delete", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [ 360, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "YOUR_GOOGLE_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.body.ticket_id }}",
+            "Name": "={{ $json.body.name }}",
+            "Phone": "={{ $json.body.phone }}",
+            "Tour Date": "={{ $json.body.tour_date }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "Google Sheets - Create (Insert)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 620, 140 ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "YOUR_GOOGLE_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.body.ticket_id }}",
+            "Tour Date": "={{ $json.body.tour_date }}"
+          },
+          "matchingColumns": [ "Ticket ID" ]
+        },
+        "options": {}
+      },
+      "id": "5",
+      "name": "Google Sheets - Update Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 620, 300 ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": { "__rl": true, "value": "YOUR_GOOGLE_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.body.ticket_id }}"
+          },
+          "matchingColumns": [ "Ticket ID" ]
+        },
+        "options": {}
+      },
+      "id": "6",
+      "name": "Google Sheets - Delete Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 620, 460 ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"action\": $json.body.action, \"ticket_id\": $json.body.ticket_id, \"message\": \"Operation completed successfully in Google Sheet!\" } }}",
+        "options": {}
+      },
+      "id": "7",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [ 900, 300 ]
+    }
+  ],
+  "connections": {
+    "Portal Request Webhook": {
+      "main": [ [ { "node": "Route by Action", "type": "main", "index": 0 } ] ]
+    },
+    "Route by Action": {
+      "main": [
+        [ { "node": "Google Sheets - Create (Insert)", "type": "main", "index": 0 } ],
+        [ { "node": "Google Sheets - Update Row", "type": "main", "index": 0 } ],
+        [ { "node": "Google Sheets - Delete Row", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Google Sheets - Create (Insert)": {
+      "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ]
+    },
+    "Google Sheets - Update Row": {
+      "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ]
+    },
+    "Google Sheets - Delete Row": {
+      "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
