@@ -1,0 +1,77 @@
+{
+  "name": "Lab 4: The Shortcut (Generic Bearer Auth)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 💳 Lab 4: The Shortcut Key (Bearer Auth)\n\n**Goal:** Connect to the API using n8n's dedicated Bearer Auth credential, reducing manual typing and preventing errors.\n\n### 🛠️ Instructions\n1. Double-click the **HTTP Request (Bearer Auth)** node below.\n2. Look at the Authentication section. It is set to **Generic Credential Type -> Bearer Auth**.\n3. Click **Create New Credential**.\n4. Notice how you don't have to name the header? Just paste your raw Groq API Key into the Token field (DO NOT type the word 'Bearer' yourself).\n5. Click **Execute Workflow**.\n\n*The Lesson: Tools create shortcuts for common patterns. Because `Authorization: Bearer` is the most common API lock in the world, n8n built a dedicated keyhole for it!*",
+        "height": 300,
+        "width": 550,
+        "color": 6
+      },
+      "id": "sticky-lab4",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-4",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 480 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "How does the Gita describe a peaceful mind?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input-4",
+      "name": "Mock Data Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 480 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: [ { role: \"system\", content: \"You are a knowledgeable guide to the Bhagavad Gita. Keep answers under 100 words.\" }, { role: \"user\", content: $json.question } ] }) }}",
+        "options": {}
+      },
+      "id": "http-request-bearer",
+      "name": "HTTP Request (Bearer Auth)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 560, 480 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input": {
+      "main": [
+        [ { "node": "HTTP Request (Bearer Auth)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
