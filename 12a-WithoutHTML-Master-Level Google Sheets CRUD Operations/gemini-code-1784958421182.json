@@ -1,0 +1,191 @@
+{
+  "name": "11a-Google-Sheets-CRUD-No-HTML",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📘 Master Class: Google Sheets Database (CRUD)\n\nWelcome to the backend! There are no HTML frontends today. We are focusing purely on data engineering and database logic.\n\n### 🎯 Your Mission\nTurn a simple Google Sheet into a living database. You will learn how to route data to Create, Read, Update, and Delete records.\n\n### 🛠️ Instructions\n1. Connect your **Google Sheets Credential** to the three nodes on the right.\n2. Point them to a sheet with the following exact columns: `Ticket ID`, `Name`, `Phone`, `Tour Date`.\n3. Open the **Mock Data Input** node. Change the `action` field to `insert`, `update`, or `delete`.\n4. Click the **Execute Workflow** button at the bottom of the screen and watch your sheet update instantly!",
+        "height": 380,
+        "width": 560,
+        "color": 6
+      },
+      "id": "sticky-lesson",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 0, 0 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 0, 420 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "action",
+              "value": "insert",
+              "type": "string"
+            },
+            {
+              "id": "mock2",
+              "name": "ticket_id",
+              "value": "KKR-TICK-999",
+              "type": "string"
+            },
+            {
+              "id": "mock3",
+              "name": "name",
+              "value": "Rahul Sharma",
+              "type": "string"
+            },
+            {
+              "id": "mock4",
+              "name": "phone",
+              "value": "+91 9876543210",
+              "type": "string"
+            },
+            {
+              "id": "mock5",
+              "name": "tour_date",
+              "value": "2026-08-15",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-data",
+      "name": "Mock Data Input (Edit Me!)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 240, 420 ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.action }}", "rightValue": "insert", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.action }}", "rightValue": "update", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.action }}", "rightValue": "delete", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-action",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [ 460, 420 ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "YOUR_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.ticket_id }}",
+            "Name": "={{ $json.name }}",
+            "Phone": "={{ $json.phone }}",
+            "Tour Date": "={{ $json.tour_date }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "sheet-insert",
+      "name": "Google Sheets (Insert)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 720, 260 ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "YOUR_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.ticket_id }}",
+            "Tour Date": "={{ $json.tour_date }}"
+          },
+          "matchingColumns": [ "Ticket ID" ]
+        },
+        "options": {}
+      },
+      "id": "sheet-update",
+      "name": "Google Sheets (Update)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 720, 420 ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": { "__rl": true, "value": "YOUR_SHEET_ID_HERE", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Sheet1", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.ticket_id }}"
+          },
+          "matchingColumns": [ "Ticket ID" ]
+        },
+        "options": {}
+      },
+      "id": "sheet-delete",
+      "name": "Google Sheets (Delete)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 720, 580 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [ [ { "node": "Mock Data Input (Edit Me!)", "type": "main", "index": 0 } ] ]
+    },
+    "Mock Data Input (Edit Me!)": {
+      "main": [ [ { "node": "Route by Action", "type": "main", "index": 0 } ] ]
+    },
+    "Route by Action": {
+      "main": [
+        [ { "node": "Google Sheets (Insert)", "type": "main", "index": 0 } ],
+        [ { "node": "Google Sheets (Update)", "type": "main", "index": 0 } ],
+        [ { "node": "Google Sheets (Delete)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
