@@ -1,0 +1,102 @@
+{
+  "name": "Lab 5: Dynamic Persona Injection",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🎭 Lab 5: Dynamic Payload (Persona Injection)\n\n**Goal:** Change the AI's behavior by injecting a dynamic variable (Persona) into the HTTP body, while keeping the API key completely hidden.\n\n### 🛠️ Instructions\n1. Open the **Define Persona (Set Node)**.\n2. Look at the `systemPrompt` variable. It currently asks the AI to act like a poet.\n3. Open the **HTTP Request (Dynamic Body)** node and scroll to the `jsonBody` field.\n4. Notice how we are no longer typing the system prompt manually. We are using the expression `{{ $json.systemPrompt }}` to inject it dynamically.\n5. Select your Generic Header Auth credential in the HTTP node.\n6. Click **Execute Workflow** and check the output to see a poetic response!",
+        "height": 340,
+        "width": 550,
+        "color": 6
+      },
+      "id": "sticky-lab5",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-5",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 500 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "What is the true meaning of Karma?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input-5",
+      "name": "Mock Data Input (Question)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 500 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "persona1",
+              "name": "systemPrompt",
+              "value": "You are a mystical poet. Answer the user's question about the Bhagavad Gita entirely in a beautiful, rhyming 4-line poem. Do not use regular prose.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-persona-5",
+      "name": "Define Persona (Set Node)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 560, 500 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: [ { role: \"system\", content: $json.systemPrompt }, { role: \"user\", content: $('Mock Data Input (Question)').item.json.question } ] }) }}",
+        "options": {}
+      },
+      "id": "http-request-dynamic",
+      "name": "HTTP Request (Dynamic Body)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 800, 500 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input (Question)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input (Question)": {
+      "main": [
+        [ { "node": "Define Persona (Set Node)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Define Persona (Set Node)": {
+      "main": [
+        [ { "node": "HTTP Request (Dynamic Body)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
