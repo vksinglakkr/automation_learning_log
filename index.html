@@ -195,7 +195,7 @@ nav ul a:hover{color:var(--text);}
   font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:5px 9px; border-radius:6px; border:1px solid;
 }
 .mini-arrow{color:var(--muted); font-size:12px;}
-.card p.desc{color:var(--muted); font-size:13.5px;}
+.card p.desc{color:var(--muted); font-size:13.5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
 .card-footer{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:12px; border-top:1px solid var(--line);}
 .card-footer .time{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
 .view-link{font-size:13px; font-weight:600; color:var(--amber); display:flex; align-items:center; gap:5px;}
@@ -248,12 +248,33 @@ nav ul a:hover{color:var(--text);}
 .modal-close:hover{color:var(--text);}
 .modal h3{font-size:24px; margin-bottom:6px;}
 .modal .modal-meta{display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
-.modal-section{margin-bottom:20px;}
-.modal-section h5{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:8px; font-family:'JetBrains Mono',monospace;}
+.modal-section{margin-bottom:0;}
+.modal-section h5{
+  font-size:12px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;
+  font-family:'JetBrains Mono',monospace; font-weight:700; display:flex; align-items:center; gap:6px;
+}
+.modal-section.sec-meta h5{color:var(--amber);}
+.modal-section.sec-prereqs h5{color:var(--teal);}
+.modal-section.sec-concepts h5{color:var(--violet);}
+.modal-section.sec-errors h5{color:var(--rose);}
 .modal-section ul{padding-left:18px; color:var(--muted); font-size:14px;}
-.modal-section ul li{margin-bottom:4px;}
+.modal-section ul li{margin-bottom:6px;}
 .modal-section p{color:var(--muted); font-size:14.5px;}
 .modal-flow{background:var(--panel-2); border-radius:10px; padding:18px; margin-bottom:20px;}
+.modal-desc{color:var(--muted); font-size:14.5px; margin-bottom:22px;}
+.modal-body-grid{display:grid; grid-template-columns:30% 1fr; gap:30px; margin-bottom:24px;}
+.modal-col-left{display:flex; flex-direction:column; gap:22px;}
+.modal-col-right{display:flex; flex-direction:column; gap:22px;}
+.modal-meta-block{display:flex; flex-direction:column; gap:8px;}
+@media (max-width:640px){ .modal-body-grid{grid-template-columns:1fr;} }
+.modal-actions-primary{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+.modal-actions-secondary{display:inline-flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+.modal-actions-secondary a{
+  padding:9px 14px; font-size:12px; color:var(--muted); border-right:1px solid var(--line); transition:.2s;
+  font-family:'JetBrains Mono',monospace; white-space:nowrap;
+}
+.modal-actions-secondary a:last-child{border-right:none;}
+.modal-actions-secondary a:hover{background:var(--panel-2); color:var(--text);}
 
 /* ---------- Footer ---------- */
 footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
@@ -321,7 +342,7 @@ footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
 
 <section class="stats">
   <div class="wrap stats-grid">
-    <div><div class="stat-num" data-count="23">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="33">0</div><div class="stat-label">Projects built</div></div>
     <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
     <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
     <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
@@ -610,6 +631,100 @@ const PROJECTS = [
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/8-hackathon-management-practice"
   },
   {
+    id:24, num:"9", title:"HTTP Request Series — Learning Roadmap", level:"Beginner", time:"10 min",
+    category:"HTTP Requests",
+    flow:[["Read the Roadmap","trigger"]],
+    desc:"A short reading-only entry point before the HTTP Request series — a Hindi story-style roadmap explaining, in plain language, what an API key is, the three places it can travel (URL, header, body), and why the next several labs each isolate one authentication style at a time instead of teaching all of them at once.",
+    concepts:["Why the series is split into small, single-concept labs instead of one large workflow","A map of what Lab 1 through Lab 6 and the 9a–9e series each cover, in order","Setting expectations: some labs are built to fail on purpose, as a teaching device"],
+    prereqs:["None — this is the starting point for the whole HTTP Request series"],
+    errors:["None — this is a reading resource, not a runnable workflow"],
+    tags:["http","roadmap","beginner","reading"],
+    story:{label:"API Learning Roadmap", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9-BasicThinkingaboutAPI_Access/API_Learning_Roadmap_Story.pdf"},
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9-BasicThinkingaboutAPI_Access"
+  },
+  {
+    id:25, num:"9L1", title:"Lab 1 — The Gita Agent (API, Face Unlock)", level:"Beginner", time:"15 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input","logic"],["Gita Guide – Agent","ai"],["Groq Chat Model","ai"]],
+    desc:"First lab in the foundational series — a manual-trigger, no-webhook build that answers a Gita question using n8n's built-in LangChain Agent node connected to a Groq Chat Model credential, the easiest and most guarded way to call an LLM: the credential is fully managed by n8n, never typed into a URL or header by hand.",
+    concepts:["The Agent node as the 'face unlock' of AI auth — n8n handles the credential entirely, nothing to configure by hand","LangChain Agent + Chat Model credential pairing, as opposed to a raw HTTP Request call","Manual trigger + Set node pattern used across all six foundational labs for classroom step-through"],
+    prereqs:["Groq API credential added to n8n"],
+    errors:["Agent and Chat Model nodes must be connected via the model-connector line, not the regular data line — an easy first-time mix-up"],
+    tags:["http","groq","ai","langchain","agent","beginner"],
+    story:{label:"Lab 1 — Specific Agent Story", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab1_AI/Lab1_Specific_Agent_Story.pdf"},
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab1_AI/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab1_AI/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab1_AI"
+  },
+  {
+    id:26, num:"9L2", title:"Lab 2 — The Universal Key (Header Auth)", level:"Beginner", time:"15 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input","logic"],["HTTP Request (Groq)","service"]],
+    desc:"Steps down from the Agent node to a raw HTTP Request call, authenticated with a Generic Credential Type → Header Auth credential — the 'universal key' pattern that works for Groq, OpenAI, and most modern APIs that read their key from the Authorization header.",
+    concepts:["Moving from the managed Agent node to a manually-built HTTP Request call for the first time","Generic Credential Type → Header Auth, and why it's called a 'universal' key style","Reading the raw JSON response from an LLM API instead of the Agent node's pre-parsed output"],
+    prereqs:["Completed Lab 1","Groq API credential (Header Auth style)"],
+    errors:["Forgetting the 'Bearer ' prefix inside the header value if the credential's Value field is filled in manually rather than via the credential's own template"],
+    tags:["http","groq","header-auth","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab2/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab2/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab2"
+  },
+  {
+    id:27, num:"9L3", title:"Lab 3 — The Danger Zone (Static Header, Anti-Pattern)", level:"Beginner", time:"15 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input","logic"],["HTTP Request (Hardcoded)","service"]],
+    desc:"A deliberately insecure lab — the API key is typed directly into the HTTP Request node's header field as plain text, with no credential system involved at all, so students can see exactly what an exported or shared workflow leaks when a key isn't stored properly.",
+    concepts:["Why hardcoded keys are dangerous even when the request itself works perfectly","What a workflow export/share actually exposes when secrets aren't in a credential","The visual and practical difference between this lab and Lab 2's Header Auth credential version"],
+    prereqs:["Completed Lab 2"],
+    errors:["This lab is intentionally insecure by design — never copy this pattern into a real deployment; the ⚠️ label in the node name is there on purpose and should stay"],
+    tags:["http","anti-pattern","security","beginner"],
+    story:{label:"Lab 3 — Danger Zone Story", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab3/Lab3_Danger_Zone_Story.pdf"},
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab3/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab3/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab3"
+  },
+  {
+    id:28, num:"9L4", title:"Lab 4 — The Shortcut (Generic Bearer Auth)", level:"Beginner", time:"15 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input","logic"],["HTTP Request (Bearer Auth)","service"]],
+    desc:"Swaps Lab 2's Header Auth credential for n8n's dedicated Bearer Auth generic credential type — a shortcut that only needs a single Token field instead of a Name/Value pair, and produces the same Authorization: Bearer header on the wire.",
+    concepts:["Header Auth vs Bearer Auth as two different credential UIs producing an equivalent header","Why n8n offers a dedicated Bearer style even though Header Auth could do the same job manually","Single-field (Token) vs two-field (Name/Value) credential forms"],
+    prereqs:["Completed Lab 2","Groq API credential (Bearer Auth style)"],
+    errors:["Pasting 'Bearer <key>' into the Token field — the word 'Bearer' is added automatically, so the field should hold the raw key only"],
+    tags:["http","bearer-auth","beginner"],
+    story:{label:"Lab 4 — Shortcut Key Story", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab4/Lab4_Shortcut_Key_Story.pdf"},
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab4/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab4/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab4"
+  },
+  {
+    id:29, num:"9L5", title:"Lab 5 — Dynamic Persona Injection", level:"Intermediate", time:"20 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input (Question)","logic"],["Define Persona","logic"],["HTTP Request (Dynamic Body)","service"]],
+    desc:"Adds a Define Persona Set node ahead of the HTTP Request call, feeding a system-prompt string into the request body dynamically — the same question can now be answered in a different voice or role just by changing the persona text, without touching the HTTP node itself.",
+    concepts:["Separating 'what to ask' (question) from 'who is answering' (persona) into two distinct Set nodes","Building a dynamic request body from two upstream fields instead of a static JSON string","Why keeping persona logic in its own node makes it reusable across other HTTP-based AI labs"],
+    prereqs:["Completed Lab 4"],
+    errors:["Persona text not reaching the request if the HTTP node's body expression references the wrong upstream node name after edits"],
+    tags:["http","groq","persona","prompt-engineering","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab5/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab5/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab5"
+  },
+  {
+    id:30, num:"9L6", title:"Lab 6 — The Code Injector (Data Validation)", level:"Intermediate", time:"20 min",
+    category:"HTTP Requests",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input (Messy Question)","logic"],["Code (Quality Inspector)","logic"],["HTTP Request (Code Body)","service"]],
+    desc:"The messiest possible input — extra whitespace, mixed case, stray punctuation — is cleaned up by a Code node before it's ever sent to Groq, showing why validating and shaping data in a Code node ahead of an HTTP call is safer than trusting whatever arrives at the form.",
+    concepts:["Data validation and sanitisation in a Code node before it reaches an HTTP Request node","Building the request body programmatically from cleaned fields instead of raw user input","The same 'quality inspector' pattern used in the 9c campus-alert and 9e data.gov.in projects, here in its simplest form"],
+    prereqs:["Completed Lab 5","Basic comfort reading JavaScript in an n8n Code node"],
+    errors:["Code node returning a plain string instead of the required [{ json: {...} }] array shape — n8n Code nodes always need items wrapped this way"],
+    tags:["http","code-node","data-validation","intermediate"],
+    story:{label:"Lab 6 — Code Injector Story", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab6/Lab6_Code_Injector_Story.pdf"},
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-FirstBasicLab6/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9e-FirstBasicLab6/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-FirstBasicLab6"
+  },
+  {
     id:14, num:"9a", title:"Placement Portal — GitHub Audit (HTTP Node Series #1)", level:"Advanced", time:"60 min",
     category:"HTTP Requests",
     flow:[["Admin Manual Trigger","trigger"],["Get Pending Applicants","service"],["Audit GitHub Server","logic"],["Evaluate Scores","logic"],["Update Database Rows","service"],["Notify Student","service"]],
@@ -680,6 +795,47 @@ const PROJECTS = [
     readmeUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-india-open-data-console/Apni-API-Key-Kaise-Use-Karein.docx",
     folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-india-open-data-console",
     story:{label:"Authorization Ki Kahani", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/authorization_ki_kahani.html"}
+  },
+  {
+    id:31, num:"11", title:"Email Parsing + Logic + Database Workflow (KKR Helpdesk CMS)", level:"Intermediate", time:"35 min",
+    category:"Complaint System",
+    flow:[["Simulated Email Arrival","trigger"],["Check for Spam/Promo","logic"],["Generate Ticket ID","logic"],["Google Sheets (Mock)","service"],["Send Email (Mock)","service"]],
+    desc:"A webhook stands in for an inbox: every incoming message is screened by a Switch node for spam or promotional content before anything else happens, genuine queries get an auto-generated ticket ID and a logged row, and only then does the acknowledgement email go out — so junk mail never eats a ticket number.",
+    concepts:["Screening/filtering incoming data before it enters the main pipeline, not after","Auto-generated ticket IDs as a pattern for any system that needs a human-readable reference number","Two very different exit paths from one Switch node — a silent ignore branch vs a full ticket-and-notify branch"],
+    prereqs:["Google Sheets credential","Gmail credential","Comfortable with Switch node routing from the 3b/9a projects"],
+    errors:["Spam/Promo detection is keyword-based in this mock — a real inbox needs a more robust filter before this pattern is production-ready","Ticket ID generation must happen after the spam check, not before, or ignored mail still consumes a ticket number"],
+    tags:["email","webhook","google-sheets","ticketing","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/11-Email%20Parsing%20+%20Logic%20+%20Database%20Workflow/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/11-Email%20Parsing%20+%20Logic%20+%20Database%20Workflow/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/11-Email%20Parsing%20+%20Logic%20+%20Database%20Workflow"
+  },
+  {
+    id:32, num:"12", title:"Master-Level Google Sheets CRUD Operations", level:"Advanced", time:"45 min",
+    category:"Database",
+    flow:[["Portal Request Webhook","trigger"],["Route by Action","logic"],["Create / Update / Delete","service"],["Respond to Webhook","service"]],
+    desc:"One webhook, one Switch node, and three full Google Sheets operations — Insert, Update Row, and Delete Row — all addressed by a single 'action' field in the incoming request, with a companion HTML console for testing each operation without writing a single request by hand.",
+    concepts:["Full CRUD (minus Read) against Google Sheets from one webhook entry point, routed by an 'action' parameter","Why Update and Delete need a row-identifying value (not just row number) to be safe against re-ordering","Pairing a workflow with a small HTML console for manual testing, same pattern as the 9e Auth Docket"],
+    prereqs:["Google Sheets credential with edit access to the target sheet","Completed 1a for basic Google Sheets append operations"],
+    errors:["Delete Row using a hardcoded row index instead of a matched value — the row shifts after the first delete and subsequent deletes hit the wrong row","Update Row silently succeeding on zero matches if the lookup value doesn't exist in the sheet"],
+    tags:["google-sheets","crud","webhook","database","advanced"],
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/12-Master-Level%20Google%20Sheets%20CRUD%20Operations/index.html",
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/12-Master-Level%20Google%20Sheets%20CRUD%20Operations/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/12-Master-Level%20Google%20Sheets%20CRUD%20Operations/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/12-Master-Level%20Google%20Sheets%20CRUD%20Operations",
+    story:{label:"Chhotu Google Sheets Story", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/12-Master-Level%20Google%20Sheets%20CRUD%20Operations/Chotu_Google_Sheets_Story.pdf"}
+  },
+  {
+    id:33, num:"12a", title:"Google Sheets CRUD Mastery — No-HTML Classroom Version", level:"Intermediate", time:"30 min",
+    category:"Database",
+    flow:[["Execute Workflow","trigger"],["Mock Data Input (Edit Me!)","logic"],["Route by Action","logic"],["Create / Update / Delete","service"]],
+    desc:"The same Insert/Update/Delete pattern as project 12, stripped of the webhook and HTML console so students can step through each branch manually — edit the Mock Data Input node, hit Execute, and watch exactly one action run at a time.",
+    concepts:["Same CRUD-by-Switch pattern as project 12, isolated for manual, no-webhook classroom walkthroughs","Why removing the webhook/HTML layer makes debugging a single branch much easier the first time through","Editing a Set node directly as a substitute for building a test form"],
+    prereqs:["Google Sheets credential","Best done right before or after project 12, for comparison"],
+    errors:["Forgetting to change the 'action' field in Mock Data Input before re-running — the same branch fires again silently"],
+    tags:["google-sheets","crud","classroom","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/12a-WithoutHTML-Master-Level%20Google%20Sheets%20CRUD%20Operations/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/12a-WithoutHTML-Master-Level%20Google%20Sheets%20CRUD%20Operations/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/12a-WithoutHTML-Master-Level%20Google%20Sheets%20CRUD%20Operations"
   },
   {
     id:19, num:"10", title:"Bulk Email Broadcast", level:"Beginner", time:"20 min",
@@ -833,7 +989,9 @@ function renderProjects(){
     7: {color:"var(--pink)",   icon:"📱", label:"WhatsApp"},
     8: {color:"var(--gold)",   icon:"🏛️", label:"Hackathon"},
     9: {color:"var(--cyan)",   icon:"🌐", label:"HTTP Series"},
-    10: {color:"var(--coral)", icon:"📢", label:"Bulk Broadcast"}
+    10: {color:"var(--coral)", icon:"📢", label:"Bulk Broadcast"},
+    11: {color:"var(--blue)",  icon:"📥", label:"Email Parsing"},
+    12: {color:"var(--green)", icon:"🗃️", label:"Sheets CRUD"}
   };
   const getGroup = (num) => parseInt(num, 10) || 0;
 
@@ -886,33 +1044,44 @@ function openModal(p){
     <button class="modal-close" id="modalClose">✕</button>
     <span class="card-idx">PROJECT_${p.num}</span>
     <h3>${p.title}</h3>
-    <div class="modal-meta">
-      <span class="badge" style="background:rgba(245,166,35,.12); color:var(--amber);">${p.level}</span>
-      <span class="time mono" style="color:var(--muted); align-self:center;">${p.time}</span>
-    </div>
     <div class="modal-flow">${flowHtml}</div>
-    <div class="modal-section"><p>${p.desc}</p></div>
-    <div class="modal-section">
-      <h5>Prerequisites</h5>
-      <ul>${p.prereqs.map(x => `<li>${x}</li>`).join("")}</ul>
+    <p class="modal-desc">${p.desc}</p>
+    <div class="modal-body-grid">
+      <div class="modal-col-left">
+        <div class="modal-section sec-meta">
+          <h5>📌 Overview</h5>
+          <div class="modal-meta-block">
+            <span class="badge" style="background:rgba(245,166,35,.12); color:var(--amber); width:fit-content;">${p.level}</span>
+            <span class="time mono" style="color:var(--muted);">⏱ ${p.time}</span>
+          </div>
+        </div>
+        <div class="modal-section sec-prereqs">
+          <h5>🧰 Prerequisites</h5>
+          <ul>${p.prereqs.map(x => `<li>${x}</li>`).join("")}</ul>
+        </div>
+      </div>
+      <div class="modal-col-right">
+        <div class="modal-section sec-concepts">
+          <h5>🧠 Concepts learned</h5>
+          <ul>${p.concepts.map(x => `<li>${x}</li>`).join("")}</ul>
+        </div>
+        <div class="modal-section sec-errors">
+          <h5>⚠️ Common errors hit</h5>
+          <ul>${p.errors.map(x => `<li>${x}</li>`).join("")}</ul>
+        </div>
+      </div>
     </div>
-    <div class="modal-section">
-      <h5>Concepts learned</h5>
-      <ul>${p.concepts.map(x => `<li>${x}</li>`).join("")}</ul>
-    </div>
-    <div class="modal-section">
-      <h5>Common errors hit</h5>
-      <ul>${p.errors.map(x => `<li>${x}</li>`).join("")}</ul>
-    </div>
-    <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+    <div class="modal-actions-primary">
       ${p.story ? `<a href="${p.story.url}" target="_blank" rel="noopener" class="btn" style="font-size:13px; padding:10px 18px; background:var(--pink); color:#2b0f1a;">📖 ${p.story.label} ↗</a>` : ""}
       ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px; padding:10px 18px;">Open live page ↗</a>` : ""}
       ${p.workflowUrl ? `<a href="${p.workflowUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Download workflow JSON ↗</a>` : ""}
       ${(p.workflows || []).map(w => `<a href="${w.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">${w.label} ↗</a>`).join("")}
-      ${p.dataUrl ? `<a href="${p.dataUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View sample data ↗</a>` : ""}
-      ${p.readmeUrl ? `<a href="${p.readmeUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Read README ↗</a>` : ""}
-      ${p.folderUrl ? `<a href="${p.folderUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Browse full folder ↗</a>` : ""}
-      ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View tracker ↗</a>` : ""}
+    </div>
+    <div class="modal-actions-secondary">
+      ${p.readmeUrl ? `<a href="${p.readmeUrl}" target="_blank" rel="noopener">Read README ↗</a>` : ""}
+      ${p.dataUrl ? `<a href="${p.dataUrl}" target="_blank" rel="noopener">View sample data ↗</a>` : ""}
+      ${p.folderUrl ? `<a href="${p.folderUrl}" target="_blank" rel="noopener">Browse full folder ↗</a>` : ""}
+      ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener">View tracker ↗</a>` : ""}
     </div>
   `;
   backdrop.classList.add("open");
