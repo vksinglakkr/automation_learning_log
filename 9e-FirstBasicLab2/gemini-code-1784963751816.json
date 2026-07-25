@@ -1,0 +1,77 @@
+{
+  "name": "Lab 2: The Universal Key (Header Auth)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🧪 Lab 2: The Universal Key (Generic Header Auth)\n\n**Goal:** Connect to an API manually using an HTTP Request node and a Generic Credential, proving you don't need pre-built agents to get the job done.\n\n### 🛠️ Instructions\n1. Double-click the **HTTP Request (Groq)** node below.\n2. Look at the Authentication section. It is set to **Generic Credential Type -> Header Auth**.\n3. Click **Create New Credential**.\n4. Name the header exactly: `Authorization`\n5. For the value, type `Bearer ` followed by your Groq API Key (e.g., `Bearer gsk_12345...`).\n6. Execute the workflow and double-click the last node to see the AI's response in raw JSON format!",
+        "height": 280,
+        "width": 550,
+        "color": 6
+      },
+      "id": "sticky-lab2",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-2",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 460 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "What is the true meaning of Yoga according to the Bhagavad Gita?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input-2",
+      "name": "Mock Data Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 460 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: [ { role: \"system\", content: \"You are a knowledgeable guide to the Bhagavad Gita. Keep answers under 100 words.\" }, { role: \"user\", content: $json.question } ] }) }}",
+        "options": {}
+      },
+      "id": "http-request-groq",
+      "name": "HTTP Request (Groq)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 560, 460 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input": {
+      "main": [
+        [ { "node": "HTTP Request (Groq)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
