@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Automation Log — n8n Journey, Kurukshetra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1120;
+  --panel:#141D33;
+  --panel-2:#101828;
+  --line:#243050;
+  --amber:#F5A623;
+  --teal:#4ECDC4;
+  --violet:#9B8CFF;
+  --rose:#F5677A;
+  --blue:#5B9DFF;
+  --green:#34D399;
+  --gold:#E0A458;
+  --pink:#FF7AAE;
+  --cyan:#38BDF8;
+  --coral:#FF8B6B;
+  --text:#E7EAF0;
+  --muted:#7C879C;
+  --radius:14px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:48px 48px;
+  opacity:0.12;
+  pointer-events:none;
+  z-index:0;
+}
+h1,h2,h3,h4{font-family:'Sora',sans-serif; letter-spacing:-0.01em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit; text-decoration:none;}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px; position:relative; z-index:1;}
+::selection{background:var(--amber); color:#0B1120;}
+
+/* ---------- Loader ---------- */
+#loader{
+  position:fixed; inset:0; background:var(--bg); z-index:999;
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  gap:16px; transition:opacity .5s ease, visibility .5s ease;
+}
+#loader .dot-line{display:flex; gap:10px;}
+#loader .dot{width:10px;height:10px;border-radius:50%; background:var(--amber); animation:pulse 1.2s infinite ease-in-out;}
+#loader .dot:nth-child(2){background:var(--teal); animation-delay:.15s;}
+#loader .dot:nth-child(3){background:var(--violet); animation-delay:.3s;}
+@keyframes pulse{0%,100%{transform:scale(0.6); opacity:.4;} 50%{transform:scale(1); opacity:1;}}
+#loader p{font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:13px; letter-spacing:.05em;}
+#loader.hide{opacity:0; visibility:hidden;}
+
+/* ---------- Progress bar ---------- */
+#progress{
+  position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--amber),var(--teal));
+  width:0%; z-index:998; transition:width .1s ease;
+}
+
+/* ---------- Nav ---------- */
+nav{
+  position:sticky; top:0; z-index:100;
+  background:rgba(11,17,32,0.85); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+nav .inner{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px; margin:0 auto;}
+.brand{display:flex; align-items:center; gap:10px; font-family:'Sora',sans-serif; font-weight:700; font-size:17px;}
+.brand .node-dot{width:10px;height:10px;border-radius:3px; background:var(--amber); box-shadow:0 0 12px var(--amber);}
+nav ul{display:flex; gap:32px; list-style:none;}
+nav ul a{font-size:14px; color:var(--muted); font-weight:500; transition:color .2s;}
+nav ul a:hover{color:var(--text);}
+.nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:22px; cursor:pointer;}
+@media(max-width:820px){
+  nav ul{position:fixed; top:64px; right:0; height:calc(100vh - 64px); width:240px; background:var(--panel);
+    flex-direction:column; padding:32px 24px; gap:24px; transform:translateX(100%); transition:transform .3s ease; border-left:1px solid var(--line);}
+  nav ul.open{transform:translateX(0);}
+  .nav-toggle{display:block;}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:90px 0 70px; position:relative;}
+.hero-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:56px; align-items:center;}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--teal); letter-spacing:.1em;
+  text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:18px;
+}
+.eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--teal); box-shadow:0 0 10px var(--teal);}
+.hero h1{font-size:clamp(34px,5vw,54px); font-weight:800; line-height:1.08; margin-bottom:20px;}
+.hero h1 span{background:linear-gradient(90deg,var(--amber),var(--rose)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.hero p.lead{color:var(--muted); font-size:17px; max-width:480px; margin-bottom:32px;}
+.btn-row{display:flex; gap:14px; flex-wrap:wrap;}
+.btn{
+  padding:13px 24px; border-radius:10px; font-weight:600; font-size:14.5px; cursor:pointer; border:1px solid transparent;
+  transition:transform .15s ease, border-color .2s ease;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn-primary{background:var(--amber); color:#1A1200;}
+.btn-ghost{border-color:var(--line); color:var(--text);}
+.btn-ghost:hover{border-color:var(--teal);}
+
+/* Live diagram in hero */
+.diagram-stage{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:28px; min-height:320px; position:relative; overflow:hidden;
+}
+.diagram-stage .stage-label{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:18px; display:block;}
+.node-flow{display:flex; flex-direction:column; gap:0; align-items:flex-start;}
+.node-item{
+  display:flex; align-items:center; gap:12px; opacity:0; transform:translateY(10px);
+  animation:nodeIn .5s ease forwards;
+}
+.node-item .pill{
+  padding:10px 16px; border-radius:9px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:500;
+  border:1px solid; white-space:nowrap;
+}
+.node-item .connector{width:2px; height:26px; background:var(--line); margin-left:20px;}
+@keyframes nodeIn{to{opacity:1; transform:translateY(0);}}
+.type-trigger{border-color:var(--amber); background:rgba(245,166,35,0.1); color:var(--amber);}
+.type-logic{border-color:var(--teal); background:rgba(78,205,196,0.1); color:var(--teal);}
+.type-service{border-color:var(--violet); background:rgba(155,140,255,0.1); color:var(--violet);}
+.type-ai{border-color:var(--rose); background:rgba(245,103,122,0.1); color:var(--rose);}
+
+/* ---------- Stats ---------- */
+.stats{padding:50px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+.stats-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:24px; text-align:center;}
+@media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-num{font-family:'Sora',sans-serif; font-size:34px; font-weight:800; color:var(--text);}
+.stat-label{font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:4px;}
+
+/* ---------- Section heads ---------- */
+.section{padding:80px 0;}
+.section-head{margin-bottom:42px; max-width:640px;}
+.section-head .eyebrow{margin-bottom:12px;}
+.section-head h2{font-size:clamp(26px,3.4vw,36px); font-weight:700;}
+.section-head p{color:var(--muted); margin-top:10px; font-size:15.5px;}
+
+/* ---------- Search & filter ---------- */
+.controls{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:36px; align-items:center;}
+.search-box{
+  flex:1; min-width:240px; display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px;
+}
+.search-box input{background:none; border:none; outline:none; color:var(--text); font-size:14.5px; width:100%; font-family:'Inter',sans-serif;}
+.search-box input::placeholder{color:var(--muted);}
+.search-box svg{flex-shrink:0;}
+.filter-row{display:flex; gap:8px; flex-wrap:wrap;}
+.filter-btn{
+  padding:9px 16px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2);
+  color:var(--muted); font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; font-family:'Inter',sans-serif;
+}
+.filter-btn:hover{color:var(--text); border-color:var(--teal);}
+.filter-btn.active{background:var(--teal); border-color:var(--teal); color:#04211E;}
+
+/* ---------- Project cards ---------- */
+.project-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:22px;}
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:24px;
+  display:flex; flex-direction:column; gap:16px; cursor:pointer; transition:transform .2s ease, border-color .2s ease;
+  opacity:0; animation:cardIn .5s ease forwards;
+}
+@keyframes cardIn{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+.card:hover{transform:translateY(-4px); border-color:var(--amber);}
+.card-top{display:flex; justify-content:space-between; align-items:flex-start;}
+.card-idx{font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:12px;}
+.badge{padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; font-family:'JetBrains Mono',monospace;}
+.badge-beginner{background:rgba(78,205,196,.12); color:var(--teal);}
+.badge-intermediate{background:rgba(245,166,35,.12); color:var(--amber);}
+.badge-advanced{background:rgba(245,103,122,.12); color:var(--rose);}
+.badge-enterprise{background:rgba(155,140,255,.12); color:var(--violet);}
+.card h3{font-size:18px; font-weight:700;}
+.cat-chip{
+  display:inline-flex; align-items:center; gap:4px; width:fit-content;
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:3px 9px; border-radius:6px;
+  border:1px solid; background:rgba(255,255,255,0.03);
+}
+.mini-flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.mini-pill{
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:5px 9px; border-radius:6px; border:1px solid;
+}
+.mini-arrow{color:var(--muted); font-size:12px;}
+.card p.desc{color:var(--muted); font-size:13.5px;}
+.card-footer{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:12px; border-top:1px solid var(--line);}
+.card-footer .time{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+.view-link{font-size:13px; font-weight:600; color:var(--amber); display:flex; align-items:center; gap:5px;}
+.story-link{
+  font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:var(--pink);
+  background:rgba(255,122,174,.12); border:1px solid rgba(255,122,174,.35); border-radius:20px;
+  padding:5px 11px; display:inline-flex; align-items:center; gap:5px; width:fit-content; transition:.2s;
+}
+.story-link:hover{background:rgba(255,122,174,.22); border-color:var(--pink);}
+.card-stories{display:flex; flex-wrap:wrap; gap:8px;}
+
+/* ---------- Roadmap ---------- */
+.timeline{position:relative; padding-left:32px;}
+.timeline::before{content:""; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:var(--line);}
+.tl-item{position:relative; padding-bottom:36px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-item::before{
+  content:""; position:absolute; left:-32px; top:4px; width:18px; height:18px; border-radius:50%;
+  background:var(--panel); border:2px solid var(--teal);
+}
+.tl-item h4{font-size:16px; margin-bottom:4px;}
+.tl-item p{color:var(--muted); font-size:13.5px;}
+
+/* ---------- Skills ---------- */
+.skill-cloud{display:flex; flex-wrap:wrap; gap:10px;}
+.skill-chip{
+  padding:9px 15px; border-radius:8px; background:var(--panel); border:1px solid var(--line);
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); transition:.2s;
+}
+.skill-chip:hover{border-color:var(--amber); color:var(--text);}
+
+/* ---------- About ---------- */
+.about-box{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:36px;}
+.about-box p{color:var(--muted); font-size:15px; margin-bottom:14px;}
+.about-box p:last-child{margin-bottom:0;}
+.about-box strong{color:var(--text);}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(6,9,18,0.75); backdrop-filter:blur(4px); z-index:200;
+  display:none; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;
+}
+.modal-backdrop.open{display:flex;}
+.modal{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); max-width:680px; width:100%;
+  padding:36px; position:relative; animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);}}
+.modal-close{position:absolute; top:20px; right:20px; background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal h3{font-size:24px; margin-bottom:6px;}
+.modal .modal-meta{display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
+.modal-section{margin-bottom:20px;}
+.modal-section h5{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:8px; font-family:'JetBrains Mono',monospace;}
+.modal-section ul{padding-left:18px; color:var(--muted); font-size:14px;}
+.modal-section ul li{margin-bottom:4px;}
+.modal-section p{color:var(--muted); font-size:14.5px;}
+.modal-flow{background:var(--panel-2); border-radius:10px; padding:18px; margin-bottom:20px;}
+
+/* ---------- Footer ---------- */
+footer{border-top:1px solid var(--line); padding:44px 0; margin-top:40px;}
+.footer-grid{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;}
+.footer-grid p{color:var(--muted); font-size:13.5px;}
+.footer-links{display:flex; gap:22px;}
+.footer-links a{color:var(--muted); font-size:13.5px; transition:.2s;}
+.footer-links a:hover{color:var(--teal);}
+
+/* ---------- Back to top ---------- */
+#toTop{
+  position:fixed; bottom:26px; right:26px; width:44px; height:44px; border-radius:50%;
+  background:var(--amber); color:#1A1200; border:none; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; opacity:0; visibility:hidden; transition:.3s; z-index:90; font-size:18px;
+}
+#toTop.show{opacity:1; visibility:visible;}
+
+.reveal{opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="dot-line"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <p>connecting nodes...</p>
+</div>
+<div id="progress"></div>
+
+<nav>
+  <div class="inner">
+    <div class="brand"><span class="node-dot"></span> The Automation Log</div>
+    <ul id="navList">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle">☰</button>
+  </div>
+</nav>
+
+<header class="hero" id="home">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Vinod Singla · Former Sr. Director, Scientist 'F', National Informatics Centre, Govt. of India</div>
+      <h1>Ten builds. One notebook. <span>Real automations, in order.</span></h1>
+      <p class="lead">A working record of every n8n project built from first install to a full event-management system — kept as a teaching path for interns picking up automation for the first time.</p>
+      <div class="btn-row">
+        <a href="#projects" class="btn btn-primary">Explore the builds</a>
+        <a href="#roadmap" class="btn btn-ghost">See the learning path</a>
+      </div>
+    </div>
+    <div class="diagram-stage">
+      <span class="stage-label">// project_05 — motivation-story.json</span>
+      <div class="node-flow" id="heroFlow"></div>
+    </div>
+  </div>
+</header>
+
+<section class="stats">
+  <div class="wrap stats-grid">
+    <div><div class="stat-num" data-count="23">0</div><div class="stat-label">Projects built</div></div>
+    <div><div class="stat-num" data-count="24">0</div><div class="stat-label">Distinct nodes used</div></div>
+    <div><div class="stat-num" data-count="9">0</div><div class="stat-label">Services integrated</div></div>
+    <div><div class="stat-num" data-count="3">0</div><div class="stat-label">AI-driven builds</div></div>
+    <div><div class="stat-num" data-count="15">0</div><div class="stat-label">Days, teaching curriculum</div></div>
+  </div>
+</section>
+
+<section class="section" id="projects">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The builds</div>
+      <h2>Every project, in the order it was learned</h2>
+      <p>Each card shows the exact node chain used — not a simplified version. Search by name, node, or category.</p>
+    </div>
+
+    <div class="controls reveal">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C879C" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, node, or tag...">
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+    </div>
+
+    <div class="project-grid" id="projectGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="roadmap" style="background:var(--panel-2);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The path</div>
+      <h2>How the curriculum actually unfolded</h2>
+      <p>Not a syllabus written in advance — the order these were genuinely built and taught in.</p>
+    </div>
+    <div class="timeline" id="roadmapList"></div>
+  </div>
+</section>
+
+<section class="section" id="skills">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The toolkit</div>
+      <h2>Nodes, services, and concepts covered</h2>
+    </div>
+    <div class="skill-cloud" id="skillCloud"></div>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">About this log</div>
+      <h2>Why this exists</h2>
+    </div>
+    <div class="about-box reveal">
+      <p><strong>The Automation Log</strong> documents a self-taught n8n journey built for real district administration needs during a career at the National Informatics Centre, Govt. of India — starting from a single scheduled message and ending in a full event-support system.</p>
+      <p>The last build, the <strong>Hackathon Management System</strong>, was a practice exercise — a virtual scenario used to learn end-to-end event operations (registration correction, categorized support triage, FAQ handling, and event-day coupon management) without a live event behind it.</p>
+      <p>This page now serves as a reference for students being introduced to n8n from scratch — each project doubles as a lesson, complete with the real node chain and the concepts it was chosen to teach.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <p>© 2026 The Automation Log · automation_learning_log — built with n8n, Groq &amp; Google Sheets.</p>
+    <div class="footer-links">
+      <a href="#projects">Projects</a>
+      <a href="#about">About</a>
+      <a href="#" onclick="return false;">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<button id="toTop">↑</button>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ===================== DATA ===================== */
+const PROJECTS = [
+  {
+    id:1, num:"1a", title:"Good Morning — Google Sheets", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Google Sheets","service"]],
+    desc:"First build: a daily scheduled message pulled from a Google Sheet. Covers n8n install, interface orientation, and Google auth setup.",
+    concepts:["n8n installation & interface","Cron scheduling","Expressions in Code node","Google OAuth setup","Reading a Google Sheet"],
+    prereqs:["n8n running (self-hosted or cloud)","A Google account"],
+    errors:["Google auth scope mismatch — re-generate OAuth credentials with Sheets API enabled","Sheet range referenced incorrectly in the node"],
+    tags:["google","scheduler","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/good-morning-log.csv",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1a-good-morning-google-sheets",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1a-good-morning-google-sheets/README.md",
+    story:{label:"सुप्रभात वाला रोबोट", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1a-good-morning-google-sheets/Suprabhat_Wala_Robot_Hindi_Story.docx"}
+  },
+  {
+    id:2, num:"1b", title:"Good Morning — Gmail", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Gmail","service"]],
+    desc:"Same scheduled pattern, swapped to send via Gmail instead of reading a sheet — isolates the difference between a data source and a delivery channel.",
+    concepts:["Gmail node OAuth","Sending vs. reading nodes","Reusing the Code node logic"],
+    prereqs:["Completed project 01","Gmail API enabled in Google Cloud Console"],
+    errors:["Gmail API not enabled on the Google Cloud project","Token expiry requiring re-authentication"],
+    tags:["gmail","scheduler","beginner"],
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1b-good-morning-gmail/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1b-good-morning-gmail",
+    story:{label:"सुप्रभात वाला डाकिया", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1b-good-morning-gmail/Suprabhat_Wala_Dakiya_Hindi_Story.docx"}
+  },
+  {
+    id:3, num:"1c", title:"Good Morning — Email (SMTP)", level:"Beginner", time:"25 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Email Node","service"]],
+    desc:"Delivery without relying on a Google/Gmail account — using raw SMTP and a 16-digit app password, useful when the account isn't Gmail-based.",
+    concepts:["SMTP fundamentals","16-digit app password generation","Email node vs. Gmail node tradeoffs"],
+    prereqs:["2-Step Verification enabled on the sending account","App password generated"],
+    errors:["Using the account's normal password instead of the 16-digit app password","Wrong SMTP port for TLS vs. SSL"],
+    tags:["smtp","email","beginner"],
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1c-good-morning-email-smtp/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1c-good-morning-email-smtp",
+    story:{label:"सुप्रभात वाला डाकिया — किसी भी डाकखाने के लिए", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1c-good-morning-email-smtp/Suprabhat_Wala_Dakiya_Email_Story.docx"}
+  },
+  {
+    id:4, num:"1d", title:"Good Morning — Twilio", level:"Beginner", time:"25 min",
+    category:"Notifications",
+    flow:[["Scheduler","trigger"],["Code","logic"],["Twilio","service"]],
+    desc:"Moves the same message pattern onto SMS, introducing a paid third-party API and its credential model.",
+    concepts:["Twilio account setup","API key vs. auth token","SMS delivery constraints (sandbox numbers)"],
+    prereqs:["Twilio trial account","Verified sandbox number"],
+    errors:["Recipient number not verified in Twilio sandbox","Country code formatting mismatch"],
+    tags:["twilio","sms","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1d-good-morning-twilio/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/1d-good-morning-twilio/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/1d-good-morning-twilio",
+    story:{label:"सुप्रभात वाला हरकारा", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/1d-good-morning-twilio/Suprabhat_Wala_WhatsApp_Story.docx"}
+  },
+  {
+    id:5, num:"2a", title:"Motivation Story — Groq AI + Twilio WhatsApp", level:"Intermediate", time:"35 min",
+    category:"AI",
+    flow:[["Scheduler","trigger"],["Set Message","logic"],["Groq (Llama 3)","ai"],["Twilio: Send WhatsApp","service"]],
+    desc:"First AI-generated content build — a scheduled motivational story with a one-line lesson and a bilingual (English + Hindi) Good Morning wish, written by Groq's Llama 3.3 model and delivered via Twilio WhatsApp. Introduces structured multi-part prompt design and reuses the Twilio delivery pattern from 1d.",
+    concepts:["Groq API integration (llama-3.3-70b-versatile)","Structured prompt design requesting multiple output sections in one response","Bilingual output generation (English + Hindi) from a single prompt","Chaining AI-generated text directly into a Twilio WhatsApp message","Reusing the Twilio delivery node from project 1d"],
+    prereqs:["Groq API key","Completed project 1d (Twilio WhatsApp delivery)"],
+    errors:["Malformed JSON from multiline prompt strings","Token limit exceeded on longer stories","WhatsApp sandbox session expired mid-test, same as project 1d"],
+    tags:["ai","groq","twilio","whatsapp","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2a-motivation-story-groq-whatsapp/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/2a-motivation-story-groq-whatsapp/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/2a-motivation-story-groq-whatsapp",
+    story:{label:"सुप्रभात वाला सयाना", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2a-motivation-story-groq-whatsapp/Suprabhat_Wala_Sayana_AI_Quote_Story.docx"}
+  },
+  {
+    id:23, num:"2b", title:"Good Morning — Groq AI, Multi-Channel + Google Sheet Log", level:"Intermediate", time:"40 min",
+    category:"AI",
+    flow:[["Schedule Trigger (7 AM)","trigger"],["Set Good Morning Message","logic"],["Generate Story (Groq AI)","ai"],["Append to Google Sheet","service"],["Gmail + WhatsApp (parallel)","service"]],
+    desc:"Brings every earlier channel together in one build: Groq writes a fresh motivational story each morning, it's logged as a new dated row in Google Sheets, and sent out on Gmail and WhatsApp at the same time — neither channel waits on the other, and the log means nothing sent is ever lost track of.",
+    concepts:["Fan-out from one AI-generated message into two independent delivery branches (Gmail, WhatsApp) that run in parallel, not in sequence","Re-introducing Google Sheets as a running log rather than the original single-purpose destination from project 1a","Same Set → AI → deliver pattern from 2a, extended with a logging branch alongside the send branches","Why parallel branches don't block each other — a slow WhatsApp send doesn't delay the Gmail send"],
+    prereqs:["Completed 1a, 1b/1c or 1d, and 2a","Groq API credential","Gmail credential","Twilio WhatsApp credential","Google Sheets credential with a log tab"],
+    errors:["Append to Google Sheet must run independently of the two send branches — wiring it in sequence after them means a failed send blocks the log entry","Each delivery branch needs the AI output referenced directly (not through the other branch's node), or one failing channel can block the other"],
+    tags:["ai","groq","multichannel","gmail","whatsapp","google","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2b-MultiChannel-AI_Gsheet_Email_Whatsapp/Good_Morning_Groq_AI_MultiChannel_Workflow%20(1).json",
+    readmeUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2b-MultiChannel-AI_Gsheet_Email_Whatsapp/README_Groq_AI_MultiChannel_Workflow%20(1).docx",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/2b-MultiChannel-AI_Gsheet_Email_Whatsapp",
+    story:{label:"सुप्रभात वाला परिवार", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/2b-MultiChannel-AI_Gsheet_Email_Whatsapp/Suprabhat_Wala_Parivar_MultiChannel_Log_Story.docx"}
+  },
+  {
+    id:6, num:"3a", title:"Single Website Status Checker", level:"Intermediate", time:"30 min",
+    category:"Monitoring",
+    flow:[["Scheduler","trigger"],["HTTP Request","logic"],["Code","logic"],["Notify","service"]],
+    desc:"Pings one site on a schedule and alerts on a non-200 response — the base pattern every later monitoring build extends.",
+    concepts:["HTTP Request node","Status code handling","Conditional alerting logic"],
+    prereqs:["A site URL to monitor","ntfy topic subscribed on phone"],
+    errors:["Timeout not configured, causing false down-alerts","Alert firing on every run instead of only on state change"],
+    tags:["monitoring","http","intermediate"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3a-website-status-checker"
+  },
+  {
+    id:7, num:"3b", title:"Multi-Website Monitoring", level:"Intermediate", time:"40 min",
+    category:"Monitoring",
+    flow:[["Schedule Trigger","trigger"],["Split Into Sites","logic"],["HTTP Request","logic"],["Merge UP/DOWN","logic"],["AI Alert (Groq)","ai"],["Gmail: Send Alert","service"]],
+    desc:"Extends the single-site checker to a list of government sites, checking each independently, branching per-item into UP/DOWN, merging the branches back together, and sending an AI-drafted alert email only for sites that are down.",
+    concepts:["Iterating over a list with Split Into Sites","Per-item branching (each site independently UP or DOWN)","Recombining branches with a Merge node","Calling AI only for the subset of items that need an alert, not on every check"],
+    prereqs:["Completed project 3a","Groq API credential","Gmail credential"],
+    errors:["Alert email referencing the first site in the list instead of the site that actually went down — check the Gmail node's expressions","Merge node set to 'Combine All' instead of 'Append', which can cross-join rows if multiple sites are UP and DOWN in the same run","Groq/Gmail nodes need credentials explicitly attached — not included by default on import"],
+    tags:["monitoring","google","batches","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/3b-multi-website-monitoring/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/3b-multi-website-monitoring/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3b-multi-website-monitoring"
+  },
+  {
+    id:8, num:"3c", title:"Database Health Checker — Registration Data Quality Auditor", level:"Advanced", time:"45 min",
+    category:"Database",
+    flow:[["Manual Trigger","trigger"],["Fetch Registrations","service"],["Validate All Records","logic"],["Groq (Llama 3)","ai"],["Twilio WhatsApp Alert","service"]],
+    desc:"Validates the data quality of a Google Sheet acting as a registration database (built for the Gita Quiz, IGM 2025). Run on demand, it checks every record's name/mobile/district formatting, flags duplicates by a name+mobile fingerprint, splits records into Clean vs. Invalid sheets, and sends a Groq-generated bilingual (English + Hindi) quality report over WhatsApp.",
+    concepts:["Manual Trigger for on-demand admin checks, not scheduled","Run-once-for-all-items validation — one Code node execution aggregates every row into a single summary","Fingerprint-based duplicate detection (name+mobile composite key)","Field normalization: district aliases, name capitalization, mobile digit cleaning","Three-way fan-out from one validation step: clean rows, error rows, and an AI summary in parallel","AI report with a fixed English/Hindi/Action-Items structure for predictable WhatsApp formatting"],
+    prereqs:["Google Sheet with Registrations, Clean_DB, and Error_Report tabs already set up with matching headers","Groq API credential","Twilio credential"],
+    errors:["Append to Clean DB / Log to Error Report use auto-map-by-column-name — target tabs must have headers exactly matching the Code nodes' output field names or rows won't map correctly","WhatsApp alert recipient is a single hardcoded number by design (admin-only alert) — needs updating to whoever should receive reports","District validation list is specific to Haryana — needs updating for other states/events"],
+    tags:["database","monitoring","data-quality","validation","ai","groq","twilio","whatsapp","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/3c-database-health-checker/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/3c-database-health-checker/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/3c-database-health-checker"
+  },
+  {
+    id:9, num:"4", title:"Leave Application Automation", level:"Advanced", time:"45 min",
+    category:"Business",
+    flow:[["Form","trigger"],["Code","logic"],["Google Sheets","service"],["Gmail","service"]],
+    desc:"First workflow with a human approval step — an employee submits a form, it's logged, and an approval email routes back to update status.",
+    concepts:["n8n Form trigger","Multi-step approval logic","Status updates written back to Sheets"],
+    prereqs:["Completed projects 01 & 02"],
+    errors:["Row lookup failing on duplicate names","Approval link not validating the correct row"],
+    tags:["form","business","google","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/4-leave-application"
+  },
+  {
+    id:10, num:"5", title:"Gita Wisdom — AI Q&A", level:"Intermediate", time:"30 min",
+    category:"AI",
+    flow:[["Webhook","trigger"],["Build Prompt","logic"],["Ask Groq","ai"],["Extract Answer","logic"],["Respond","service"]],
+    desc:"A visitor submits a question — 'What does the Gita say about Ahimsa?', 'What is Karma?' — along with a language choice (English/Hindi) and a tone style (simple/reflective/scholarly). The workflow builds a style-specific system prompt, asks Groq, then extracts the answer and pulls out a single verse citation (e.g. 'BG 2.47') if the model included one, returning clean JSON for the front end to render.",
+    concepts:["Webhook trigger accepting structured JSON (question, language, style)","Dynamic system-prompt construction based on user-selected tone/style","Prompt-level guardrails: instructing the model to ground answers in the source text and never fabricate a citation","Parsing a trailing verse citation out of free-form AI text with a regex","CORS handling (Access-Control-Allow-Origin) for a public-facing webhook"],
+    prereqs:["Groq API key","A front-end form posting JSON with question/language/style fields to the webhook URL"],
+    errors:["Webhook left in Test mode instead of Production, breaking the live page","Citation regex not matching if the model formats 'BG 2.47' with extra punctuation or on a non-final line","No question provided — the Code node throws explicitly, which needs a matching error-response path on the frontend"],
+    tags:["ai","groq","gita","webhook","intermediate"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/5-gita-wisdom-ai-qa/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/5-gita-wisdom-ai-qa/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/5-gita-wisdom-ai-qa"
+  },
+  {
+    id:11, num:"6a", title:"Complaint System — Gmail Inbox Router", level:"Advanced", time:"50 min",
+    category:"Business",
+    flow:[["Gmail Trigger","trigger"],["Check Already Processed","service"],["AI Summary","ai"],["Department Router","logic"],["Log to Google Sheets","service"],["Forward + Acknowledge","service"]],
+    desc:"Citizens email complaints directly (Aadhar, Ration, PPP, Pension, Revenue, Credit, etc.) to a monitored inbox. A Gmail Trigger polls every minute; each email is deduplicated against the log, AI-classified as a genuine complaint or not, routed to the right department by keyword rules, logged to Sheets with a reference number, and answered with two parallel emails — an acknowledgement to the citizen and a forward-for-action to the officer.",
+    concepts:["Gmail Trigger polling with a broad multilingual keyword filter (English + Hindi)","Deduplication via a Sheets lookup before processing, using alwaysOutputData + continueOnFail to handle 'no match found' gracefully","AI-based genuine-vs-not classification before any routing happens","Rule-based department routing from AI-extracted category to officer email + label","Two parallel outbound emails (citizen acknowledgement, officer forward) from one branch point","Reference number generation from the Gmail message ID"],
+    prereqs:["Gmail account receiving citizen complaint emails","Groq API credential","Google Sheets credential with a Complaints tab","Gmail labels created for post-processing"],
+    errors:["'Is New Email?' condition uses OR instead of AND across (not duplicate) / (subject contains 'Complaint') / (snippet contains 'Complaint') — an already-processed email whose subject happens to contain 'Complaint' can still pass through and be reprocessed, since OR only needs one true condition","Forward to Officer email references '.subject' (lowercase) instead of '.Subject' (capital) in one row — likely renders blank due to case-sensitive field mismatch","The 'Complaint' keyword check in the IF node is English-only and narrower than the Gmail Trigger's broad multilingual search — many trigger-matched emails (e.g. subject 'Pension Issue') won't contain the literal word 'Complaint'"],
+    tags:["complaint","ai","government","google","gmail","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6a-complaint-system-gmail-inbox/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6a-complaint-system-gmail-inbox/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6a-complaint-system-gmail-inbox"
+  },
+  {
+    id:16, num:"6b", title:"Complaint System — Web Form", level:"Advanced", time:"55 min",
+    category:"Business",
+    flow:[["Form Trigger","trigger"],["AI Improve Complaint","ai"],["Process & Route","logic"],["Log to Google Sheets","service"],["Email + WhatsApp (Citizen)","service"],["Email + WhatsApp (Officer)","service"]],
+    desc:"Citizens submit complaints through a public web form (Pension, Aadhaar, PPP, Ration, Revenue, CRED, Other), with an AI-assist option to formalize their complaint text before submitting. Groq classifies department/priority and rewrites the text; the workflow logs it to Sheets and sends both email and WhatsApp notifications to the citizen and the routed officer in parallel.",
+    concepts:["AI-assisted text improvement before submission, triggered from the form itself","One AI call returning both rewritten text and structured metadata (department/priority/summary) in a labeled format","Two independent notification channels per recipient — email and WhatsApp, each in their own sequential branch","Reference number generation from citizen name + timestamp"],
+    prereqs:["Groq API credential","Google Sheets credential with a Complaints tab","Gmail credential","Twilio credential (WhatsApp) with each officer/citizen number joined if in sandbox mode"],
+    errors:["Original workflow hardcoded a single WhatsApp number for every department's officer alert — fixed in the sanitized version to use the per-department field that was already being computed but ignored","Twilio Account SID needs to be filled into two separate node URLs — easy to update one and miss the other","AI Improve Complaint step depends on a specific labeled output format (DEPARTMENT/PRIORITY/SUMMARY) — a model that doesn't follow the format exactly will fall back to 'OTHERS'/'Medium' defaults"],
+    tags:["complaint","ai","groq","government","google","gmail","twilio","whatsapp","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6b-complaint-system-web-form/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6b-complaint-system-web-form/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6b-complaint-system-web-form"
+  },
+  {
+    id:17, num:"6c", title:"Complaint System — Custom HTML + Webhook", level:"Advanced", time:"55 min",
+    category:"Business",
+    flow:[["Receive Complaint (Webhook)","trigger"],["Map & Prepare Data","logic"],["AI Improve & Classify","ai"],["Extract & Route","logic"],["Log + Respond","service"],["Email + WhatsApp (both)","service"]],
+    desc:"Third complaint variant, built around two raw Webhook endpoints for a fully custom HTML page rather than n8n's built-in form. One endpoint powers a lightweight 'AI Assist' preview button (rewrite only, nothing saved); the other handles final submission — classifying, routing, logging, and notifying citizen and officer by both email and WhatsApp in parallel.",
+    concepts:["Two-webhook pattern: a cheap preview endpoint separate from the full submission endpoint","Deferred re-classification — the submission endpoint always re-runs AI on whichever text (raw or already-improved) the citizen ends up submitting","Immediate webhook response in parallel with logging, so the citizen isn't kept waiting on email/WhatsApp sends","Explicit node-reference syntax ($('NodeName').item.json) for clearer multi-hop data flow"],
+    prereqs:["Groq API credential","Google Sheets credential with a Complaints Log tab","Gmail credential","Twilio credential (WhatsApp)","A custom HTML page calling both webhook endpoints"],
+    errors:["No per-department WhatsApp routing exists — every officer alert goes to one hardcoded number regardless of department, unlike 6b which at least computes a per-department value","WhatsApp nodes' credential is named 'Cloudinary' — worth verifying in n8n this is genuinely a relabeled Twilio credential and not the wrong one attached","Original export's pinData contained a full real test submission (email, phone, IP, self-hosted domain) — stripped entirely in the sanitized version, but a reminder to check pinData before publishing any future export"],
+    tags:["complaint","ai","groq","government","google","gmail","twilio","whatsapp","webhook","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/6c-complaint-system-custom-html/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/6c-complaint-system-custom-html/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/6c-complaint-system-custom-html"
+  },
+  {
+    id:12, num:"7", title:"WhatsApp VIP Alert", level:"Advanced", time:"35 min",
+    category:"Monitoring",
+    flow:[["Webhook","trigger"],["Code","logic"],["Switch","logic"],["Notify","service"]],
+    desc:"Incoming WhatsApp messages are relayed through ntfy. The workflow checks the sender against a VIP list (DC, SIO, etc.) or scans content for priority keywords (e.g. 'flood alert') and escalates matching messages instantly to the concerned authority — built for situations like flood control where a message can't wait to be noticed manually.",
+    concepts:["Relaying WhatsApp messages through ntfy as a trigger source","Sender-based VIP matching vs. keyword-based content matching","Switch node for multi-path escalation","Instant push notification to a concerned authority"],
+    prereqs:["ntfy topic receiving forwarded WhatsApp messages","List of VIP senders and priority keywords"],
+    errors:["Keyword match too broad, triggering on unrelated messages containing the word","VIP number format mismatch (missing country code) causing missed matches"],
+    tags:["whatsapp","ntfy","alert","monitoring","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/7-whatsapp-vip-alert"
+  },
+  {
+    id:13, num:"8", title:"Hackathon Management System (Practice)", level:"Enterprise", time:"Multi-day",
+    category:"Enterprise",
+    flow:[["Form","trigger"],["Validate & Sort","logic"],["Support Desk","service"],["FAQ Engine","service"],["Coupon Manager","service"]],
+    desc:"A virtual, practice-only build simulating full event management: correcting entry errors on existing and new registrations, sorting into three categories (e.g. admit card issues), running a support desk (WiFi, parking, laptop), an FAQ layer, and event-day coupon and activity management.",
+    concepts:["Data validation & error correction at scale","Multi-category sorting logic","Support-ticket style routing","Event-day operational automation"],
+    prereqs:["Completed projects 01–09","Comfortable with Sheets as a database"],
+    errors:["Duplicate entries counted twice during correction pass","Category sort misclassifying edge-case entries"],
+    tags:["enterprise","events","practice","advanced"],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/8-hackathon-management-practice"
+  },
+  {
+    id:14, num:"9a", title:"Placement Portal — GitHub Audit (HTTP Node Series #1)", level:"Advanced", time:"60 min",
+    category:"HTTP Requests",
+    flow:[["Admin Manual Trigger","trigger"],["Get Pending Applicants","service"],["Audit GitHub Server","logic"],["Evaluate Scores","logic"],["Update Database Rows","service"],["Notify Student","service"]],
+    desc:"First build in a dedicated HTTP Request node series. Students register on a live HTML form (Workflow A: Webhook → Google Sheets, status = Pending). Separately, an admin-controlled batch workflow (Workflow B) reads all Pending rows, calls the GitHub REST API per student via HTTP Request to audit their public repo count, scores them, updates the sheet, and emails a personalized result — a real 'queue now, process later' pattern used to avoid hitting API rate limits.",
+    concepts:["HTTP Request node calling a live external REST API (GitHub)","Splitting a system into a 24x7 ingestion workflow and an admin-controlled batch workflow","Using Google Sheets as a buffer/queue (Status: Pending → Audited)","Manual Trigger for admin-controlled batch runs","Conditional scoring logic in a Set node","Building a personalized HTML email from live API response data"],
+    prereqs:["Completed projects 01–08","A Google Sheet with a Status column (Pending/Audited)","Gmail credential"],
+    errors:["GitHub API rate limit hit when auditing many Pending applicants in one run — batch size needs capping","Update Database Rows matching the wrong row when GitHub_Username has stray whitespace","Webhook blocked by CORS if allowedOrigins isn't set correctly for the form's domain"],
+    tags:["http","github-api","two-workflow","queue","admin-controlled","advanced"],
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/9a-github-audit-placement-portal/index.html",
+    workflows:[
+      {label:"Download Workflow A (Ingestion)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9a-github-audit-placement-portal/WorkFlow_Entry.json"},
+      {label:"Download Workflow B (Admin Auditor)", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9a-github-audit-placement-portal/Administration_Auditor.json"}
+    ],
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9a-github-audit-placement-portal"
+  },
+  {
+    id:18, num:"9b", title:"Interview Travel Weather-Risk Checker (HTTP Node Series #2)", level:"Advanced", time:"55 min",
+    category:"HTTP Requests",
+    flow:[["Admin Manual Run","trigger"],["Read Batch Data","service"],["Live Forecaster","logic"],["Max Temp > 40°C","logic"],["Update Sheet","service"],["Gmail (Student + HR)","service"]],
+    desc:"Second build in the HTTP Request series. A batch job reads every upcoming student interview, calls a live weather forecast API for the exact destination and travel date, and automatically clears the trip (hotel + travel pass confirmed) or defers it — emailing both the student and the company's HR team with entirely different content depending on which way the real-time forecast falls.",
+    concepts:["Query parameters instead of a URL path parameter (Day 1 used a path parameter; this uses latitude/longitude/date as query params)","Parsing a nested API response (an object containing an array, one level deeper than Day 1's flat response)","Chained IF nodes (reschedule-limit check, then temperature threshold)","One decision fanning out into different Sheet updates and different emails to different recipients","A keyless public API (no credential setup needed for the weather call itself)"],
+    prereqs:["Completed project 9a","Google Sheets credential","Gmail credential"],
+    errors:["Check Chances < 3 IF node exists specifically to stop the same student being deferred indefinitely — remove it and a permanently bad-weather city would loop forever","Open-Meteo's daily response returns an array even for a single date — forgetting the [0] index is an easy mistake","Latitude/Longitude must be pre-populated per destination city in the Sheet; the workflow doesn't geocode city names itself"],
+    tags:["http","weather-api","query-parameters","multi-branch","gmail","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9b-interview-travel-weather-risk/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9b-interview-travel-weather-risk/sample-data.csv",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9b-interview-travel-weather-risk/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9b-interview-travel-weather-risk"
+  },
+  {
+    id:20, num:"9c", title:"Secure Campus Placement Flash-Alert Engine (HTTP Node Series #3)", level:"Advanced", time:"50 min",
+    category:"HTTP Requests",
+    flow:[["Run Publish Job","trigger"],["Get Pending Entries","service"],["Attach Department Token","logic"],["Publish to Display Board","logic"],["Mark as Published","service"]],
+    desc:"Third build in the HTTP Request series — the first to write instead of read. When the T&P cell logs a student's selection, the workflow finds every unpublished entry, wraps it in a JSON payload, authenticates with that department's own Bearer token, and POSTs it to a central display board server, then marks the row published so it's never sent twice.",
+    concepts:["Becoming a publisher, not just a consumer — the first POST in the series after two GET-only builds","Sending data in a JSON request body instead of a URL, since the payload is sensitive","Authorization: Bearer token headers for authenticated writes","Why n8n's built-in credential picker (one static credential per node) isn't enough for a per-row, per-department token, and looking the token up dynamically in a Code node instead","Multi-agency architecture: each department's own token gives independent traceability and revocation"],
+    prereqs:["Completed 9a and 9b","Google Sheets credential","A display board server endpoint with per-department Bearer tokens issued"],
+    errors:["Every value in this workflow is a placeholder by design — Sheet ID, credential ID, server URL, and all department tokens must be filled in before it runs","Hardcoding tokens directly in the Code node is only acceptable for this lab — a real deployment should pull them from environment variables or a secrets manager","TOKEN_MAP only covers 5 example departments — extend it to match your real department list"],
+    tags:["http","post","json-body","bearer-token","multi-tenant","authentication","advanced"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9c-campus-placement-flash-alert/workflow.json",
+    dataUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9c-campus-placement-flash-alert/sample-data.csv",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/9c-campus-placement-flash-alert/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9c-campus-placement-flash-alert"
+  },
+  {
+    id:21, num:"9d", title:"Gita Oracle — Groq Auth Mastery (HTTP Node Series #4)", level:"Advanced", time:"50 min",
+    category:"HTTP Requests",
+    flow:[["Gita Question","trigger"],["Validate Method","logic"],["Route by Method","logic"],["Groq — 6 Auth Styles","ai"],["Respond","service"]],
+    desc:"Fourth build in the HTTP Request series — one webhook, one question about the Gita, answered six different ways by Groq depending on which authentication style is selected: a LangChain Agent node, a predefined credential, Header Auth, Bearer Auth, Header Auth with a persona system-prompt, and a code-built prompt. A seventh branch deliberately hardcodes the key in a static header as a labelled anti-pattern.",
+    concepts:["Comparing n8n's built-in AI Agent node against a raw HTTP Request call to the same Groq endpoint","Same six/seven-branch Switch pattern as the data.gov.in console (9e), this time proving auth styles that DO work for an LLM API instead of ones that fail","Persona injection via a separate Set node feeding a system prompt into the request","Building the prompt in a Code node instead of a static string","A labelled anti-pattern branch (static header key) kept in on purpose for teaching, not deleted"],
+    prereqs:["Groq API credential","Completed 9a–9c for the HTTP Request node basics"],
+    errors:["Agent node and raw HTTP node can return differently-shaped responses — the Shape/Respond nodes for each branch are not interchangeable","Persona branch silently ignored if 'Define Persona' isn't connected ahead of its HTTP node","Static Header branch is intentionally insecure — never remove the ⚠️ label when reusing this pattern elsewhere"],
+    tags:["http","groq","ai","authentication","langchain","advanced"],
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/9d-mastery-groq/index.html",
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9d-mastery-groq/workflow.json",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9d-mastery-groq"
+  },
+  {
+    id:22, num:"9e", title:"India Open Data Console — Query vs Header vs Bearer (HTTP Node Series #5)", level:"Advanced", time:"50 min",
+    category:"HTTP Requests",
+    flow:[["Census Query","trigger"],["Validate Method","logic"],["Switch","logic"],["data.gov.in — 7 Auth Styles","logic"],["Respond","service"]],
+    desc:"Fifth build in the HTTP series, and the mirror image of 9d: the same six/seven-branch Switch pattern, but against India's data.gov.in Open Data API — which only accepts its key as a URL query parameter. Two branches (Header Auth, Bearer Auth) are kept in deliberately failing, so the difference between 'request built correctly' and 'request accepted by this specific server' is something students see happen, not just read about.",
+    concepts:["Query Auth vs Header Auth vs Bearer Auth against a real government API with only one accepted mechanism","Reading n8n's raw webhook item shape correctly — body fields live under $json.body, not flattened onto $json directly","A seventh branch (static key typed in at request-time from the incoming form) alongside the six generic-credential styles","A companion 'Auth Docket' HTML tester that shows the exact request being built live as each method is selected"],
+    prereqs:["A free data.gov.in account and API key (Register → My Account → Generate API Key)","Completed 9d for the auth-style comparison pattern"],
+    errors:["$json.state / $json.method (flat) silently return undefined if the webhook body isn't unwrapped — always use $json.body.state / $json.body.method","Header Auth and Bearer Auth branches are supposed to fail here — that's the lesson, not a bug","rawBody webhook option is unrelated to this issue and can be left on or off either way"],
+    tags:["http","query-auth","header-auth","bearer-auth","government","authentication","advanced"],
+    demoUrl:"https://vksinglakkr.github.io/automation_learning_log/9e-india-open-data-console/index.html",
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-india-open-data-console/workflow.json",
+    readmeUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/9e-india-open-data-console/Apni-API-Key-Kaise-Use-Karein.docx",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/9e-india-open-data-console",
+    story:{label:"Authorization Ki Kahani", url:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/authorization_ki_kahani.html"}
+  },
+  {
+    id:19, num:"10", title:"Bulk Email Broadcast", level:"Beginner", time:"20 min",
+    category:"Notifications",
+    flow:[["Manual Trigger","trigger"],["Get 100 Users","service"],["Send Email (Gmail)","service"]],
+    desc:"The simplest possible bulk-send pattern: read every row from a Sheet, and send one personalized Gmail message per row, triggered manually whenever needed. No scheduling, no filtering — run it and everyone in the sheet gets an email.",
+    concepts:["One node automatically running once per item — a single Gmail node sends N separate emails with no loop or batching node needed for a small list","Personalizing each send via expressions pulling that row's own Name/Email","Manual Trigger for a controlled, on-demand broadcast rather than a schedule"],
+    prereqs:["Gmail credential","Google Sheets credential with Name + Email columns"],
+    errors:["No rate limiting — sending 100+ emails in one run risks hitting Gmail's sending caps partway through with no way to tell who was missed","No 'already sent' tracking — running it twice emails everyone twice","Node name 'Get 100 Users' doesn't actually cap the read at 100 rows — no limit is set, so it reads however many rows exist"],
+    tags:["gmail","bulk","broadcast","beginner"],
+    workflowUrl:"https://raw.githubusercontent.com/vksinglakkr/automation_learning_log/main/10-bulk-email-broadcast/workflow.json",
+    readmeUrl:"https://github.com/vksinglakkr/automation_learning_log/blob/main/10-bulk-email-broadcast/README.md",
+    folderUrl:"https://github.com/vksinglakkr/automation_learning_log/tree/main/10-bulk-email-broadcast"
+  },
+  {
+    id:15, num:"3d", title:"Website Up/Down Monitor — AI Alerts (Groq)", level:"Advanced", time:"45 min",
+    category:"Monitoring",
+    flow:[["Every 5 Minutes","trigger"],["Check Website","logic"],["Compare With Previous","logic"],["Log Check to Sheet","service"],["Groq Alert","ai"],["Send Email","service"]],
+    desc:"A state-aware upgrade to the basic status checker: checks every 5 minutes, compares the current result against the last logged row in Google Sheets, and only fires an alert at the exact moment the site goes down or recovers — never on every single check. Groq writes a short bilingual (English + Hindi) alert or recovery notice, sent via Gmail.",
+    concepts:["Comparing current vs. previous state across scheduled runs to avoid repeat alerts","IF node branching on boolean transition flags (just_went_down / just_recovered)","continueOnFail + neverError options for resilient HTTP checks that don't crash the workflow","AI-generated bilingual alert text via Groq, triggered only on state transitions","Separate down-alert and recovery-notice branches with independent email templates"],
+    prereqs:["Completed project 3a (basic single-site checker)","Groq API credential","Gmail credential","A Google Sheet with a SiteLog tab"],
+    errors:["Read Last Status returning rows in the wrong order without a sort, breaking the 'last row' comparison","AI request failing silently if Groq's response shape changes — the Code node's fallback text catches this, but worth testing","Repeated down-alerts if the transition flags aren't correctly reset between runs"],
+    tags:["monitoring","http","ai","groq","gmail","state-tracking","advanced"]
+  }
+];
+
+const ROADMAP = [
+  "Installation & Interface — getting n8n running, first look at the canvas",
+  "Notifications — Sheets, Gmail, SMTP, Twilio: same pattern, four channels",
+  "Monitoring — single site, then a full list, logged and alerted",
+  "AI Automation — first Groq-powered content generation",
+  "Database — health checks against a live connection",
+  "Business Automation — human approval steps, status tracking",
+  "Enterprise Systems — a full practice event-management build"
+];
+
+const SKILLS = ["Scheduler","Code Node","HTTP Request","Google Sheets","Gmail","SMTP","Twilio","Groq AI","Webhook",
+  "Split In Batches","Form Trigger","Database Query","ntfy","OAuth2","JSON","Expressions","Conditional Logic",
+  "Regex","REST API","Google Cloud Console","App Passwords","Error Handling","Google Drive","Cron"];
+
+const NODE_TYPE_LABEL = {trigger:"type-trigger", logic:"type-logic", service:"type-service", ai:"type-ai"};
+
+/* ===================== LOADER ===================== */
+window.addEventListener("load", () => {
+  setTimeout(() => document.getElementById("loader").classList.add("hide"), 500);
+});
+
+/* ===================== SCROLL PROGRESS ===================== */
+window.addEventListener("scroll", () => {
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById("progress").style.width = scrolled + "%";
+  document.getElementById("toTop").classList.toggle("show", h.scrollTop > 500);
+});
+
+/* ===================== NAV TOGGLE ===================== */
+document.getElementById("navToggle").addEventListener("click", () => {
+  document.getElementById("navList").classList.toggle("open");
+});
+document.querySelectorAll("#navList a").forEach(a => a.addEventListener("click", () => {
+  document.getElementById("navList").classList.remove("open");
+}));
+
+/* ===================== BACK TO TOP ===================== */
+document.getElementById("toTop").addEventListener("click", () => window.scrollTo({top:0, behavior:"smooth"}));
+
+/* ===================== HERO DIAGRAM ===================== */
+function renderHeroFlow(){
+  const container = document.getElementById("heroFlow");
+  container.innerHTML = "";
+  const flow = PROJECTS[4].flow; // motivation story
+  flow.forEach(([label, type], i) => {
+    if(i > 0){
+      const c = document.createElement("div");
+      c.className = "connector";
+      container.appendChild(c);
+    }
+    const item = document.createElement("div");
+    item.className = "node-item";
+    item.style.animationDelay = (i * 0.35) + "s";
+    item.innerHTML = `<div class="pill ${NODE_TYPE_LABEL[type]}">${label}</div>`;
+    container.appendChild(item);
+  });
+}
+renderHeroFlow();
+
+/* ===================== STATS COUNTER ===================== */
+function animateCounters(){
+  document.querySelectorAll(".stat-num").forEach(el => {
+    const target = parseInt(el.dataset.count, 10);
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 40));
+    const iv = setInterval(() => {
+      cur += step;
+      if(cur >= target){ cur = target; clearInterval(iv); }
+      el.textContent = cur;
+    }, 30);
+  });
+}
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ animateCounters(); statsObserver.disconnect(); } });
+}, {threshold:0.4});
+statsObserver.observe(document.querySelector(".stats"));
+
+/* ===================== PROJECT GRID ===================== */
+let activeFilter = "All";
+let searchTerm = "";
+
+function buildFilters(){
+  const cats = ["All", ...new Set(PROJECTS.map(p => p.category))];
+  const row = document.getElementById("filterRow");
+  row.innerHTML = "";
+  cats.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "filter-btn" + (cat === "All" ? " active" : "");
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
+      activeFilter = cat;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProjects();
+    });
+    row.appendChild(btn);
+  });
+}
+
+function matchesSearch(p, term){
+  if(!term) return true;
+  const hay = (p.title + " " + p.category + " " + p.tags.join(" ") + " " + p.flow.map(f=>f[0]).join(" ")).toLowerCase();
+  return hay.includes(term.toLowerCase());
+}
+
+function renderProjects(){
+  const grid = document.getElementById("projectGrid");
+  grid.innerHTML = "";
+  const filtered = PROJECTS.filter(p => (activeFilter === "All" || p.category === activeFilter) && matchesSearch(p, searchTerm));
+
+  if(filtered.length === 0){
+    grid.innerHTML = `<p style="color:var(--muted); grid-column:1/-1;">No project matches that search — try a different node or category.</p>`;
+    return;
+  }
+
+  const badgeClass = {Beginner:"badge-beginner", Intermediate:"badge-intermediate", Advanced:"badge-advanced", Enterprise:"badge-enterprise"};
+  const GROUP_STYLE = {
+    1: {color:"var(--teal)",   icon:"🔔", label:"Good Morning"},
+    2: {color:"var(--rose)",   icon:"✨", label:"Motivation"},
+    3: {color:"var(--amber)",  icon:"📡", label:"Monitoring"},
+    4: {color:"var(--blue)",   icon:"🗂️", label:"Leave App"},
+    5: {color:"var(--violet)", icon:"🕉️", label:"Gita Wisdom"},
+    6: {color:"var(--green)",  icon:"📋", label:"Complaint"},
+    7: {color:"var(--pink)",   icon:"📱", label:"WhatsApp"},
+    8: {color:"var(--gold)",   icon:"🏛️", label:"Hackathon"},
+    9: {color:"var(--cyan)",   icon:"🌐", label:"HTTP Series"},
+    10: {color:"var(--coral)", icon:"📢", label:"Bulk Broadcast"}
+  };
+  const getGroup = (num) => parseInt(num, 10) || 0;
+
+  filtered.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.animationDelay = (i * 0.06) + "s";
+    const groupNum = getGroup(p.num);
+    const catStyle = GROUP_STYLE[groupNum] || {color:"var(--muted)", icon:"⚙️", label:p.category};
+    card.style.borderLeft = `3px solid ${catStyle.color}`;
+    const flowHtml = p.flow.map(([label,type], idx) =>
+      (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
+      `<span class="mini-pill ${NODE_TYPE_LABEL[type]}">${label}</span>`
+    ).join("");
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-idx">PROJECT_${p.num}</span>
+        <span class="badge ${badgeClass[p.level]}">${p.level}</span>
+      </div>
+      <span class="cat-chip" style="color:${catStyle.color}; border-color:${catStyle.color}44;">${catStyle.icon} ${p.category}</span>
+      <h3>${p.title}</h3>
+      <div class="mini-flow">${flowHtml}</div>
+      <p class="desc">${p.desc}</p>
+      ${p.story ? `<div class="card-stories"><a href="${p.story.url}" target="_blank" rel="noopener" class="story-link" onclick="event.stopPropagation()">📖 ${p.story.label}</a></div>` : ""}
+      <div class="card-footer">
+        <span class="time mono">${p.time}</span>
+        <span class="view-link">View details →</span>
+      </div>
+    `;
+    card.addEventListener("click", () => openModal(p));
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  renderProjects();
+});
+
+/* ===================== MODAL ===================== */
+function openModal(p){
+  const backdrop = document.getElementById("modalBackdrop");
+  const content = document.getElementById("modalContent");
+  const flowHtml = p.flow.map(([label,type], idx) =>
+    (idx>0 ? '<span class="mini-arrow">→</span>' : '') +
+    `<span class="mini-pill ${NODE_TYPE_LABEL[type]}">${label}</span>`
+  ).join("");
+
+  content.innerHTML = `
+    <button class="modal-close" id="modalClose">✕</button>
+    <span class="card-idx">PROJECT_${p.num}</span>
+    <h3>${p.title}</h3>
+    <div class="modal-meta">
+      <span class="badge" style="background:rgba(245,166,35,.12); color:var(--amber);">${p.level}</span>
+      <span class="time mono" style="color:var(--muted); align-self:center;">${p.time}</span>
+    </div>
+    <div class="modal-flow">${flowHtml}</div>
+    <div class="modal-section"><p>${p.desc}</p></div>
+    <div class="modal-section">
+      <h5>Prerequisites</h5>
+      <ul>${p.prereqs.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-section">
+      <h5>Concepts learned</h5>
+      <ul>${p.concepts.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-section">
+      <h5>Common errors hit</h5>
+      <ul>${p.errors.map(x => `<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+      ${p.story ? `<a href="${p.story.url}" target="_blank" rel="noopener" class="btn" style="font-size:13px; padding:10px 18px; background:var(--pink); color:#2b0f1a;">📖 ${p.story.label} ↗</a>` : ""}
+      ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px; padding:10px 18px;">Open live page ↗</a>` : ""}
+      ${p.workflowUrl ? `<a href="${p.workflowUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Download workflow JSON ↗</a>` : ""}
+      ${(p.workflows || []).map(w => `<a href="${w.url}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">${w.label} ↗</a>`).join("")}
+      ${p.dataUrl ? `<a href="${p.dataUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View sample data ↗</a>` : ""}
+      ${p.readmeUrl ? `<a href="${p.readmeUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Read README ↗</a>` : ""}
+      ${p.folderUrl ? `<a href="${p.folderUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">Browse full folder ↗</a>` : ""}
+      ${p.trackerUrl ? `<a href="${p.trackerUrl}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:13px; padding:10px 18px;">View tracker ↗</a>` : ""}
+    </div>
+  `;
+  backdrop.classList.add("open");
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+}
+function closeModal(){ document.getElementById("modalBackdrop").classList.remove("open"); }
+document.getElementById("modalBackdrop").addEventListener("click", (e) => {
+  if(e.target.id === "modalBackdrop") closeModal();
+});
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeModal(); });
+
+/* ===================== ROADMAP ===================== */
+function renderRoadmap(){
+  const list = document.getElementById("roadmapList");
+  list.innerHTML = "";
+  ROADMAP.forEach(step => {
+    const [title, desc] = step.split(" — ");
+    const item = document.createElement("div");
+    item.className = "tl-item";
+    item.innerHTML = `<h4>${title}</h4><p>${desc}</p>`;
+    list.appendChild(item);
+  });
+}
+
+/* ===================== SKILLS ===================== */
+function renderSkills(){
+  const cloud = document.getElementById("skillCloud");
+  cloud.innerHTML = "";
+  SKILLS.forEach(s => {
+    const chip = document.createElement("span");
+    chip.className = "skill-chip";
+    chip.textContent = s;
+    cloud.appendChild(chip);
+  });
+}
+
+/* ===================== SCROLL REVEAL ===================== */
+function initReveal(){
+  const revealEls = document.querySelectorAll(".reveal");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add("in"); });
+  }, {threshold:0.15});
+  revealEls.forEach(el => io.observe(el));
+}
+
+/* ===================== INIT ===================== */
+buildFilters();
+renderProjects();
+renderRoadmap();
+renderSkills();
+initReveal();
+</script>
+
+</body>
+</html>
