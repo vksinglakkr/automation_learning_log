@@ -1,0 +1,85 @@
+{
+  "name": "Lab 3: The Danger Zone (Static Header)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ⚠️ Lab 3: The Danger Zone (Static Header)\n\n**Goal:** Prove that hardcoding an API key directly into a node is a massive security risk.\n\n### 🛠️ Instructions\n1. Double-click the **HTTP Request (Hardcoded)** node below.\n2. Notice that Authentication is set to **None**.\n3. Scroll down to **Send Headers**. You will see `Authorization` typed manually.\n4. Replace the word `PASTE_YOUR_RAW_KEY_HERE` with your actual Groq API Key.\n5. Click **Execute Workflow** to see that it works perfectly.\n6. **The Lesson:** Now, click the main n8n menu (top left) and click **Download**. Open the JSON file in any text editor. *Your secret API key is sitting right there in plain text for the whole world to see!*",
+        "height": 320,
+        "width": 550,
+        "color": 2
+      },
+      "id": "sticky-lab3",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-3",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 480 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "What is the importance of focus and meditation in the Gita?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input-3",
+      "name": "Mock Data Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 480 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer PASTE_YOUR_RAW_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: [ { role: \"system\", content: \"You are a knowledgeable guide to the Bhagavad Gita. Keep answers under 100 words.\" }, { role: \"user\", content: $json.question } ] }) }}",
+        "options": {}
+      },
+      "id": "http-request-danger",
+      "name": "HTTP Request (Hardcoded)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 560, 480 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input": {
+      "main": [
+        [ { "node": "HTTP Request (Hardcoded)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
