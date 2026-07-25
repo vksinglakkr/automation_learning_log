@@ -1,0 +1,92 @@
+{
+  "name": "Lab 6: The Code Injector (Data Validation)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🕵️‍♂️ Lab 6: The Code Injector\n\n**Goal:** Use a Code node (JavaScript) to validate user input and assemble the JSON structure *before* it reaches the HTTP node.\n\n### 🛠️ Instructions\n1. Open the **Mock Data Input** node. Notice that the question is extremely long and has weird spaces.\n2. Open the **Code (Quality Inspector)** node. Look at the JavaScript. It `trims` the spaces and `slices` the text at 500 characters so it doesn't break our API limits.\n3. Open the **HTTP Request (Code Body)** node. Scroll to `jsonBody`. Notice how short the expression is now: `{{ { model: \"llama-3.3-70b-versatile\", messages: $json.messages } }}`. The HTTP node no longer has to build the message array; it just passes it along!\n4. Click **Execute Workflow** and check the output.",
+        "height": 380,
+        "width": 550,
+        "color": 6
+      },
+      "id": "sticky-lab6",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-6",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 520 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "    Tell me everything about the Kurukshetra war and give me every single detail from all the chapters... [pretend this is 2000 characters long]    ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input-6",
+      "name": "Mock Data Input (Messy Question)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 520 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Extract the raw question (or default to empty string)\nconst rawQuestion = $json.question || '';\n\n// 2. Validate & Clean: Remove extra spaces, and strictly limit to 500 chars.\nconst cleanQuestion = rawQuestion.trim().slice(0, 500);\n\n// 3. Define the Persona (System Prompt)\nconst systemPrompt = \"You are a patient guide to the Gita. Keep answers under 100 words.\";\n\n// 4. Assemble the exact JSON structure the API expects\nconst messages = [\n  { role: 'system', content: systemPrompt },\n  { role: 'user', content: cleanQuestion }\n];\n\n// 5. Output the cleaned data and the assembled array\nreturn [{\n  json: {\n    ...$json,\n    messages,\n    inputLength: cleanQuestion.length\n  }\n}];"
+      },
+      "id": "code-inspector-6",
+      "name": "Code (Quality Inspector)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ 560, 520 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.3-70b-versatile\", messages: $json.messages }) }}",
+        "options": {}
+      },
+      "id": "http-request-code",
+      "name": "HTTP Request (Code Body)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 800, 520 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input (Messy Question)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input (Messy Question)": {
+      "main": [
+        [ { "node": "Code (Quality Inspector)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Code (Quality Inspector)": {
+      "main": [
+        [ { "node": "HTTP Request (Code Body)", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
