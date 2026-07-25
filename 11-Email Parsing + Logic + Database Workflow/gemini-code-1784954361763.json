@@ -1,0 +1,178 @@
+{
+  "name": "10-KKR-Helpdesk-CMS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cms-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Simulated Email Arrival",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [ 100, 300 ]
+    },
+    {
+      "parameters": {
+        "content": "## 📨 Automated Helpdesk (CMS)\n\n**Goal:** Read incoming text, ignore spam, log genuine complaints to Google Sheets, and auto-reply with a Ticket ID.\n\n**How to use for class:**\n1. Use the Webhook to test logic quickly via the HTML Console.\n2. Once logic is perfect, delete the Webhook and connect the **Gmail/IMAP Trigger** node to read real live emails!\n3. Connect your Google Sheet and Gmail credentials to the placeholder nodes.",
+        "height": 260,
+        "width": 500,
+        "color": 6
+      },
+      "id": "2",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 0 ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.body.subject.toLowerCase() }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "offer",
+              "operation": "contains"
+            },
+            {
+              "value2": "discount",
+              "operation": "contains"
+            },
+            {
+              "value2": "promotional",
+              "operation": "contains"
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Check for Spam/Promo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [ 360, 300 ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ignored\", \"reason\": \"Promotional or Spam Email detected. Dropped.\", \"subject\": $json.body.subject } }}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Respond - Ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [ 620, 160 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "ticket_id",
+              "value": "={{ 'KKR-' + $now.toFormat('HHmmss') }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "status",
+              "value": "Pending",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5",
+      "name": "Generate Ticket ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 620, 420 ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "ENTER_YOUR_SHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ticket ID": "={{ $json.ticket_id }}",
+            "Sender": "={{ $('Simulated Email Arrival').item.json.body.sender }}",
+            "Subject": "={{ $('Simulated Email Arrival').item.json.body.subject }}",
+            "Status": "={{ $json.status }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "6",
+      "name": "Google Sheets (Mock)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [ 860, 420 ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Simulated Email Arrival').item.json.body.sender }}",
+        "subject": "={{ 'Re: ' + $('Simulated Email Arrival').item.json.body.subject + ' [Ticket: ' + $json.ticket_id + ']' }}",
+        "message": "={{ 'Dear User,\\n\\nWe have received your email. Your Ticket ID is ' + $json.ticket_id + '. Our team will look into this within 24 hours.\\n\\nRegards,\\nKKR Tour Guide Helpdesk' }}",
+        "appendAttribution": false,
+        "options": {}
+      },
+      "id": "7",
+      "name": "Send Email (Mock)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [ 1080, 420 ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"processed\", \"ticket_id\": $json.ticket_id, \"message\": \"Complaint logged and Auto-reply sent!\" } }}",
+        "options": {}
+      },
+      "id": "8",
+      "name": "Respond - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [ 1300, 420 ]
+    }
+  ],
+  "connections": {
+    "Simulated Email Arrival": {
+      "main": [ [ { "node": "Check for Spam/Promo", "type": "main", "index": 0 } ] ]
+    },
+    "Check for Spam/Promo": {
+      "main": [
+        [ { "node": "Respond - Ignored", "type": "main", "index": 0 } ],
+        [ { "node": "Generate Ticket ID", "type": "main", "index": 0 } ],
+        [ { "node": "Generate Ticket ID", "type": "main", "index": 0 } ],
+        [ { "node": "Generate Ticket ID", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Generate Ticket ID": {
+      "main": [ [ { "node": "Google Sheets (Mock)", "type": "main", "index": 0 } ] ]
+    },
+    "Google Sheets (Mock)": {
+      "main": [ [ { "node": "Send Email (Mock)", "type": "main", "index": 0 } ] ]
+    },
+    "Send Email (Mock)": {
+      "main": [ [ { "node": "Respond - Success", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

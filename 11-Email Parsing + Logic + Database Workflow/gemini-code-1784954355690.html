@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKR Helpdesk — CMS Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #12141C; --panel: #1A1D29; --line: #2E3247;
+    --parchment: #EDE8DC; --muted: #8B8FA3; --leaf: #5FA37E;
+    --saffron: #D48A2E; --danger: #C4634B;
+    --display: 'Fraunces', serif; --body: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  }
+  body { margin:0; background:var(--ink); color:var(--parchment); font-family:var(--body); line-height:1.5; padding: 40px 24px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { font-family:var(--display); font-size: 36px; margin:0; color:var(--saffron); }
+  h1 em { font-style:italic; color:var(--leaf); font-weight:400; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+  label { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom: 6px; text-transform:uppercase; letter-spacing:1px; }
+  input, select, textarea { width:100%; background:#12141C; border:1px solid var(--line); border-radius:6px; color:var(--parchment); font-family:var(--body); font-size:14px; padding:10px; margin-bottom: 16px; box-sizing:border-box; }
+  button { width:100%; background:var(--saffron); color:#12141C; border:none; border-radius: 6px; padding: 12px; font-weight:600; font-size:15px; cursor:pointer; font-family:var(--body); }
+  button:hover { filter:brightness(1.1); }
+  .response-box { background:#0e1019; border:1px solid var(--line); border-radius:8px; padding:16px; font-family:var(--mono); font-size:13px; min-height: 80px; white-space: pre-wrap;}
+  .success { color: var(--leaf); }
+  .spam { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>KKR Tour Guide <em>Helpdesk</em></h1>
+    <p style="color:var(--muted); margin-top:8px;">Simulate incoming emails to test the n8n Complaint Monitoring System (CMS) logic.</p>
+  </header>
+
+  <div class="card">
+    <label>1. n8n Webhook URL (Production)</label>
+    <input type="url" id="webhookUrl" placeholder="https://your-instance.n8n.cloud/webhook/cms-inbound">
+    
+    <label>2. Choose Email Scenario</label>
+    <select id="scenario">
+      <option value="complaint">Genuine Complaint: Tour guide was late</option>
+      <option value="promo">Spam/Promotional: 50% Discount on Hotels!</option>
+      <option value="inquiry">General Inquiry: What are the timings?</option>
+    </select>
+
+    <label>Sender Email</label>
+    <input type="text" id="sender" value="rahul.tourist@example.com">
+
+    <label>Email Subject</label>
+    <input type="text" id="subject" value="Complaint: Tour guide was late for Brahma Sarovar tour">
+
+    <button id="sendBtn">Send Email to System</button>
+  </div>
+
+  <div class="card">
+    <label>System Response (Trace)</label>
+    <div id="response" class="response-box" style="color:var(--muted);">Awaiting incoming email simulation...</div>
+  </div>
+</div>
+
+<script>
+  const scenarioData = {
+    complaint: { sender: "rahul.tourist@example.com", subject: "Complaint: Tour guide was late for Brahma Sarovar tour" },
+    promo: { sender: "marketing@spammer.com", subject: "Exclusive Offer: Get 50% discount on Kurukshetra Hotels!" },
+    inquiry: { sender: "priya.travel@example.com", subject: "Inquiry regarding entry timings" }
+  };
+
+  document.getElementById('scenario').addEventListener('change', function(e) {
+    const data = scenarioData[e.target.value];
+    document.getElementById('sender').value = data.sender;
+    document.getElementById('subject').value = data.subject;
+  });
+
+  document.getElementById('sendBtn').addEventListener('click', async function() {
+    const url = document.getElementById('webhookUrl').value.trim();
+    const sender = document.getElementById('sender').value;
+    const subject = document.getElementById('subject').value;
+    const resBox = document.getElementById('response');
+
+    if (!url) { resBox.innerHTML = "<span class='spam'>Please enter your n8n Webhook URL first.</span>"; return; }
+    
+    resBox.innerHTML = "Sending...";
+    this.disabled = true;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender, subject, body: "Simulated email body content." })
+      });
+      const data = await response.json();
+      
+      if (data.status === "ignored") {
+        resBox.innerHTML = `<span class='spam'>[DROPPED]</span> System detected spam.\nReason: ${data.reason}`;
+      } else {
+        resBox.innerHTML = `<span class='success'>[PROCESSED]</span> Ticket Generated: ${data.ticket_id}\nDatabase: Appended to Google Sheets\nAction: Auto-reply dispatched.`;
+      }
+    } catch (err) {
+      resBox.innerHTML = `<span class='spam'>Error: Could not connect to n8n. Did you activate the workflow?</span>`;
+    } finally {
+      this.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
