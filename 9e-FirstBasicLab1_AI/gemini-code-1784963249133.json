@@ -1,0 +1,90 @@
+{
+  "name": "Lab 1: The Gita Agent (API Face Unlock)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🧪 Lab 1: The \"Face Unlock\" of APIs (AI Agent)\n\n**Goal:** Get a successful response from the Groq AI with zero manual HTTP configuration.\n\n### 🛠️ Instructions\n1. Double-click the **Groq Chat Model** node below.\n2. In the Credential dropdown, click **Create New Credential**.\n3. Paste your Groq API Key and save it.\n4. Open the **Mock Data Input** node to see the question we are asking.\n5. Click **Execute Workflow** at the bottom of the screen!\n\n*Notice how you didn't have to type \"Authorization\" or \"Bearer\". n8n's Agent handled the entire \"smart lock\" process for you in the background.*",
+        "height": 280,
+        "width": 550,
+        "color": 6
+      },
+      "id": "sticky-lab1",
+      "name": "Classroom Guide",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 100, 100 ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Execute Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [ 100, 460 ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mock1",
+              "name": "question",
+              "value": "What does Krishna say about performing duty without attachment?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-input",
+      "name": "Mock Data Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [ 320, 460 ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.question }}",
+        "options": {
+          "systemMessage": "You are a patient, knowledgeable guide to the Bhagavad Gita. Answer clearly in plain language, cite chapter and verse where relevant, and keep answers under 150 words."
+        }
+      },
+      "id": "ai-agent",
+      "name": "Gita Guide – Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [ 560, 460 ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "id": "groq-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [ 560, 660 ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow": {
+      "main": [
+        [ { "node": "Mock Data Input", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Mock Data Input": {
+      "main": [
+        [ { "node": "Gita Guide – Agent", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [ { "node": "Gita Guide – Agent", "type": "ai_languageModel", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
