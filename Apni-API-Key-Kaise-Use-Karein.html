@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apni API Key Kaise Use Karein</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Hind:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  :root{
+    --paper:#fbf8f0; --rule:#c7d4e8; --margin-red:#c0453e; --ink:#1f2937; --ink-soft:#4b5768;
+    --board:#1e4d3a; --board-chalk:#f4efdc; --board-chalk-dim:#cfe6d6; --yellow-chalk:#e8c14a;
+    --red:#B23A2E; --green:#2F7D5C; --gold:#9C7A1E; --cream:#F4F1E8;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:#e9e2d0; font-family:'Hind',system-ui,sans-serif; color:var(--ink); line-height:1.75; padding:0 0 70px;}
+  h1,h2,h3{font-family:'Baloo 2','Hind',sans-serif;}
+  code,.mono{font-family:'JetBrains Mono',monospace; font-size:.92em;}
+  .board{background:var(--board); color:var(--board-chalk); padding:40px 20px 46px; text-align:center; border-bottom:10px solid #8a5a2b;}
+  .board .eyebrow{font-family:'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; font-size:12px; color:var(--yellow-chalk); margin:0 0 12px;}
+  .board h1{font-size:clamp(24px,4.6vw,38px); margin:0 0 10px;}
+  .board .en{display:block; font-size:.5em; color:var(--board-chalk-dim); font-family:'Hind',sans-serif; font-weight:500; margin-top:6px;}
+  .board p.tagline{max-width:560px; margin:0 auto; color:var(--board-chalk-dim); font-size:14.5px;}
+  .page{max-width:820px; margin:0 auto;
+    background:repeating-linear-gradient(var(--paper),var(--paper) 33px,var(--rule) 34px);
+    background-color:var(--paper); border-left:3px solid var(--margin-red); padding:36px 34px 40px 54px;
+    box-shadow:0 10px 40px rgba(0,0,0,.18);}
+  p{margin:0 0 14px; font-size:15.5px;}
+  h1.part{font-size:24px; color:var(--ink); border-bottom:2px solid var(--red); padding-bottom:8px; margin:34px 0 16px;}
+  h2.sub{font-size:18px; color:var(--red); margin:24px 0 10px;}
+  .note-box{background:var(--cream); border-left:6px solid var(--gold); padding:12px 16px; margin:12px 0 18px; white-space:pre-line;}
+  .code-line{background:#ede7d9; color:var(--board); font-family:'JetBrains Mono',monospace; font-size:13.5px; padding:8px 12px; margin:6px 0; border-radius:3px; word-break:break-all;}
+  table{width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:13.5px; background:#fff;}
+  th,td{border:1px solid #d8d0bd; padding:9px 10px; text-align:left; vertical-align:top;}
+  th{background:var(--board); color:var(--board-chalk); font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase;}
+  tr:nth-child(even) td{background:#f7f2e6;}
+  td.works{color:var(--green); font-weight:700;} td.fails{color:var(--red); font-weight:700;}
+  .checklist-item{margin-bottom:10px; font-size:15px;}
+  .checklist-item::before{content:"\2610  "; color:var(--red); font-weight:700;}
+  ul.plain{padding-left:20px; margin:0 0 16px;}
+  ul.plain li{margin-bottom:6px; font-size:15px;}
+  hr.rule{border:none; border-top:1px dashed #c9bfa4; margin:26px 0;}
+  .closing{text-align:center; font-style:italic; color:var(--ink-soft); font-size:15px;}
+  .footer-note{text-align:center; font-size:12.5px; color:#7a715c; padding:26px 20px 0; max-width:600px; margin:0 auto;}
+</style>
+</head>
+<body>
+
+<div class="board">
+  <p class="eyebrow">Automation Learning Log &middot; Printable Reference</p>
+  <h1>Apni API Key Kaise Use Karein<span class="en">A Beginner's Complete Guide to data.gov.in API + Auth Concepts</span></h1>
+</div>
+
+<div class="page">
+
+  <p>Ye page khaas taur par un students ke liye banaya gaya hai jinhone abhi-abhi data.gov.in par apna account banaya hai aur apni API key generate ki hai. Jab bhi confusion ho, yehi page dobara padh lena.</p>
+
+  <h1 class="part">Part 1 — Apni Key Se Pehla Kaam</h1>
+
+  <h2 class="sub">1.1 Humara Practice Dataset</h2>
+  <p>Is guide me hum ek real dataset use kar rahe hain, jisse tum khud test kar sako:</p>
+  <div class="note-box">Dataset: Year-wise retail inflation rate based on Consumer Price Index-Combined (CPI-C), 2017-18 se 2022-23 tak
+Resource ID: 352b3616-9d3d-42e5-80af-7d21a2a53fab</div>
+  <p>Resource ID ko ek tarah se us dataset ka "tracking number" samjho — jaise parcel bhejte waqt ek unique number milta hai, waise hi data.gov.in ke har dataset ka apna alag Resource ID hota hai. Ye number URL me hamesha likha jaata hai.</p>
+
+  <h2 class="sub">1.2 Parameters Jo Tum Bhej Sakte Ho</h2>
+  <p>Jab bhi API page dekho, wahan ek chhota table hota hai jisme likha hota hai kaun-kaun se parameters bhej sakte ho:</p>
+  <table>
+    <tr><th>Parameter</th><th>Kya hai (matlab)</th><th>Example value</th></tr>
+    <tr><td style="color:var(--red); font-weight:700;">api-key *</td><td>Tumhari pehchaan — bina isske koi bhi data nahi milega</td><td>apni generated key, ya sample key</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">format *</td><td>Data kis roop me chahiye — json sabse aasan hai padhne me</td><td>json</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">offset</td><td>Kitne records shuru se skip karne hain (agla page dekhne ke liye)</td><td>0, 10, 20 ...</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">limit</td><td>Ek baar me kitne records chahiye</td><td>10</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">filters[document_id]</td><td>Ek khaas document ID se hi result chahiye to</td><td>(dataset ke hisaab se)</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">filters[financial_year]</td><td>Sirf ek khaas saal ka data chahiye to</td><td>2020-21</td></tr>
+    <tr><td style="color:var(--red); font-weight:700;">filters[cpi_c_inflation_]</td><td>Ek khaas inflation % waale record dhoondhne ho to</td><td>(number)</td></tr>
+  </table>
+
+  <h2 class="sub">1.3 Apna Pehla Working URL Banao</h2>
+  <p>Step by step, ek working URL is tarah banta hai:</p>
+  <div class="code-line">Step 1 — Base: https://api.data.gov.in/resource/352b3616-9d3d-42e5-80af-7d21a2a53fab</div>
+  <div class="code-line">Step 2 — Apni key jodo: ?api-key=TUMHARI_KEY_YAHAN</div>
+  <div class="code-line">Step 3 — Format jodo: &amp;format=json</div>
+  <div class="code-line">Step 4 — Limit jodo: &amp;limit=10</div>
+  <p style="margin-top:14px;"><strong>Final URL</strong> (test karne ke liye seedhe browser ke address bar me paste kar sakte ho):</p>
+  <div class="code-line">https://api.data.gov.in/resource/352b3616-9d3d-42e5-80af-7d21a2a53fab?api-key=TUMHARI_KEY_YAHAN&amp;format=json&amp;limit=10</div>
+
+  <div class="note-box">Yaad rahe: agar abhi tak apni khud ki key nahi banayi, to isi page par ek sample/demo key already di hoti hai testing ke liye — usse 10 records tak mil jaate hain, par usme rate-limit kam hoti hai. Apna kaam pakka hone ke baad hamesha apni khud ki (My Account se generate ki hui) key use karna.</div>
+
+  <h2 class="sub">1.4 Apna Data Filter Karo</h2>
+  <p>Agar sirf ek khaas saal ka data chahiye, to filters[financial_year] jod do:</p>
+  <div class="code-line">...&amp;filters[financial_year]=2020-21</div>
+  <p>Poora URL is tarah dikhega:</p>
+  <div class="code-line">https://api.data.gov.in/resource/352b3616-9d3d-42e5-80af-7d21a2a53fab?api-key=TUMHARI_KEY_YAHAN&amp;format=json&amp;limit=10&amp;filters[financial_year]=2020-21</div>
+
+  <h2 class="sub">1.5 Isi Key Ko n8n Me Kaise Lagayein</h2>
+  <p>Apne workflow ke HTTP Request node me:</p>
+  <p class="checklist-item">Authentication dropdown me "Generic Credential Type" chuno</p>
+  <p class="checklist-item">Generic Auth Type me "Query Auth" chuno</p>
+  <p class="checklist-item">Naya credential banate waqt: Name box me likho api-key, Value box me apni asli key paste karo</p>
+  <p class="checklist-item">URL field me sirf itna likho: https://api.data.gov.in/resource/352b3616-9d3d-42e5-80af-7d21a2a53fab?format=json&amp;limit=10 (api-key wapas mat likhna — wo credential khud jod dega)</p>
+
+  <h1 class="part">Part 2 — Ab Tak Jo Seekha (Poori Recap)</h1>
+  <p>Ye hissa un sab concepts ka summary hai jo humne pichli classes me seekhe the — Header, Authorization, Bearer, aur humare 7-branch workflow.</p>
+
+  <h2 class="sub">2.1 Ek Request Ki Teen Jagah</h2>
+  <p>Har HTTP request me teen jagah hoti hain:</p>
+  <ul class="plain">
+    <li>URL / Query Parameter — jaise parcel ka bahar wala address label, sabko dikhta hai.</li>
+    <li>Header — parcel ke upar staple kiya hua chhota envelope, jisme alag khaane hote hain.</li>
+    <li>Body — parcel ke andar ka asli saaman.</li>
+  </ul>
+
+  <h2 class="sub">2.2 "Authorization" Header</h2>
+  <p>Header ke andar tum koi bhi naam likh sakte ho (custom header bhi bana sakte ho, jaise x-api-key). Lekin "Authorization" ek pehle se tay standard naam hai — har server, browser aur security tool ko pata hai ki permission ka proof yahin dhoondhna hai. Isliye zyaadatar companies (Groq, OpenAI, GitHub) yehi naam use karti hain — par data.gov.in nahi karta, wo sirf query parameter accept karta hai.</p>
+
+  <h2 class="sub">2.3 "Bearer" Ka Matlab</h2>
+  <p>Authorization header ki value ke andar aksar ek "scheme word" hota hai jo bataata hai key ko kaise padhna hai. Bearer ka matlab: bus-ticket jaisa — jiske paas token hai, wahi allowed hai, extra ID check nahi.</p>
+  <table>
+    <tr><th>Scheme word</th><th>Matlab</th><th>Example</th></tr>
+    <tr><td style="color:var(--green); font-weight:700;">Bearer</td><td>bas token dikhao, koi extra check nahi</td><td>Authorization: Bearer sk-abc123</td></tr>
+    <tr><td style="color:var(--green); font-weight:700;">Basic</td><td>username:password ko base64 karke bhejna</td><td>Authorization: Basic dXNlcjpwYXNz</td></tr>
+    <tr><td style="color:var(--green); font-weight:700;">(kuch nahi)</td><td>seedha raw key, koi scheme word nahi</td><td>x-api-key: abc123</td></tr>
+  </table>
+
+  <h2 class="sub">2.4 Humara 7-Branch Workflow — Final Comparison</h2>
+  <table>
+    <tr><th>#</th><th>Tareeka</th><th>Authentication dropdown</th><th>Key kahan gayi</th><th>Result</th></tr>
+    <tr><td>1</td><td><strong>Hardcoded</strong></td><td>None</td><td>URL me seedhe type ki</td><td class="works">chalta hai (unsafe)</td></tr>
+    <tr><td>2</td><td><strong>Query Auth</strong></td><td>Generic → Query Auth</td><td>URL me, par chhupi hui</td><td class="works">chalta hai</td></tr>
+    <tr><td>3</td><td><strong>Header Auth</strong></td><td>Generic → Header Auth</td><td>Header me</td><td class="fails">FAIL hota hai</td></tr>
+    <tr><td>4</td><td><strong>Bearer Auth</strong></td><td>Generic → Bearer Auth</td><td>Header me (Bearer style)</td><td class="fails">FAIL hota hai</td></tr>
+    <tr><td>5</td><td><strong>Code-Built Query</strong></td><td>Generic → Query Auth</td><td>URL me, Code node se banayi</td><td class="works">chalta hai</td></tr>
+    <tr><td>6</td><td><strong>Config-Driven</strong></td><td>Generic → Query Auth</td><td>URL me, Set node se aayi</td><td class="works">chalta hai</td></tr>
+    <tr><td>7</td><td><strong>Static (typed-in)</strong></td><td>None</td><td>URL me, form se aayi</td><td class="works">chalta hai (kam secure)</td></tr>
+  </table>
+  <div class="note-box">Pattern yaad rakho: jo bhi tareeka query parameter (URL) me key bhejta hai, wo chalta hai. Jo header ya Bearer me bhejta hai, wo data.gov.in ke liye fail hota hai — kyunki data.gov.in sirf URL hi padhta hai.</div>
+
+  <h2 class="sub">2.5 Koi Bhi Naya API Mile To — 5 Sawal</h2>
+  <p class="checklist-item">Key kahan jaati hai — URL me, header me, ya body me?</p>
+  <p class="checklist-item">Agar header me, header ka naam kya hai — Authorization ya kuch custom?</p>
+  <p class="checklist-item">Agar Authorization hai, koi scheme word (Bearer/Basic) chahiye ya sirf raw key?</p>
+  <p class="checklist-item">Key ka format kya hai — plain text, base64, ya JWT jaisa token?</p>
+  <p class="checklist-item">Har request ke saath key bhejni hai, ya sirf ek baar login karke session milta hai?</p>
+
+  <h1 class="part">Part 3 — Apni Practical Checklist</h1>
+  <p>Isse tick karte jaana — poora ho jaaye to samajh lena tumhara setup ready hai:</p>
+  <p class="checklist-item">Data.gov.in par account bana liya</p>
+  <p class="checklist-item">My Account &rarr; API Key se apni khud ki key generate ki</p>
+  <p class="checklist-item">Ek dataset choose kiya aur uska Resource ID note kar liya</p>
+  <p class="checklist-item">Browser me test URL chalakar records aate hue dekh liye</p>
+  <p class="checklist-item">n8n me Query Auth credential banaya — Name: api-key, Value: apni key</p>
+  <p class="checklist-item">Apne HTTP Request node me wahi credential select kiya</p>
+  <p class="checklist-item">Workflow chalakar response me records check kiye</p>
+  <p class="checklist-item">Agar galti se Header Auth ya Bearer Auth try kiya, samjha ki wo kyun fail hota hai</p>
+
+  <hr class="rule">
+  <p class="closing">Automation Learning Log &middot; seekhne ka maksad sirf itna: koi bhi naya API dekhkar dar mat jao, ye sawal poochho aur khud pata laga lo.</p>
+</div>
+
+</body>
+</html>
